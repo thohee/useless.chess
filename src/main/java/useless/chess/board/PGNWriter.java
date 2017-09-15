@@ -3,6 +3,8 @@ package useless.chess.board;
 import java.io.FileWriter;
 import java.io.IOException;
 
+import useless.chess.board.GameReport.Result;
+
 public class PGNWriter {
 
 	public static void write(GameReport gameReport, String filename) throws IOException {
@@ -22,10 +24,13 @@ public class PGNWriter {
 		if (gameReport.getBlack() != null) {
 			fileWriter.write("[Black \"" + gameReport.getBlack() + "\"]\n");
 		}
+		if (gameReport.getResult() != null && !gameReport.getResult().equals(Result.None)) {
+			fileWriter.write("[Result \"" + gameReport.getResult().toString() + "\"]\n");
+		}
 		if (gameReport.getMoves() != null) {
 			fileWriter.write(Move.toString(gameReport.getMoves()));
 		}
-		if (gameReport.getResult() != null) {
+		if (gameReport.getResult() != null && !gameReport.getResult().equals(Result.None)) {
 			fileWriter.write("  " + gameReport.getResult().toString());
 		}
 		fileWriter.write("\n");

@@ -10,6 +10,7 @@ import java.util.List;
 import useless.chess.board.BoardPosition;
 import useless.chess.board.Colour;
 import useless.chess.board.GameReport;
+import useless.chess.board.GameReport.Result;
 import useless.chess.board.Move;
 import useless.chess.board.PGNParser;
 import useless.chess.board.PGNWriter;
@@ -87,6 +88,10 @@ public class Game {
 					: new LexicographicMinimaxPlayer(Colour.Black);
 		}
 
+		GameReport gameReport = new GameReport();
+		gameReport.setEvent("useless.chess");
+		gameReport.setWhite(whitePlayer.getClass().getName());
+		gameReport.setBlack(blackPlayer.getClass().getName());
 		System.out.println(boardPosition.toString());
 		try {
 			while (!boardPosition.getPossibleMoves().isEmpty()) {
@@ -102,25 +107,21 @@ public class Game {
 			}
 
 			if (boardPosition.isDraw()) {
+				gameReport.setResult(Result.Draw);
 				System.out.println("Draw");
 			} else if (boardPosition.isCheckmate()) {
-				System.out.println(boardPosition.getColourToMove().opposite().name() + " wins");
+				Colour winner = boardPosition.getColourToMove().opposite();
+				gameReport.setResult(winner.equals(Colour.White) ? Result.White : Result.Black);
+				System.out.println(winner.name() + " wins");
 			}
-			// TODO: also save game after end of match
 		} catch (RuntimeException e) {
 			System.out.println(e.getMessage());
-			GameReport gameReport = new GameReport();
-			gameReport.setEvent("useless.chess");
-			gameReport.setWhite(whitePlayer.getClass().getName());
-			gameReport.setBlack(blackPlayer.getClass().getName());
-			for (Move move : boardPosition.getPerformedMoves()) {
-				gameReport.add(move);
-			}
-			try {
-				PGNWriter.write(gameReport, gameFilename);
-			} catch (IOException e1) {
-				System.err.println(e.getClass().getSimpleName() + ": " + e.getMessage());
-			}
+		}
+		gameReport.setMoves(boardPosition.getPerformedMoves());
+		try {
+			PGNWriter.write(gameReport, gameFilename);
+		} catch (IOException e) {
+			System.err.println(e.getClass().getSimpleName() + ": " + e.getMessage());
 		}
 	}
 

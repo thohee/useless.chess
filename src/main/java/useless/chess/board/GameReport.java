@@ -72,6 +72,10 @@ public class GameReport {
 		moves.add(move);
 	}
 
+	public void setMoves(List<Move> moves) {
+		this.moves = moves;
+	}
+
 	public List<Move> getMoves() {
 		return moves;
 	}
