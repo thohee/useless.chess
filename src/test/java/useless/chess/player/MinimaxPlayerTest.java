@@ -17,6 +17,9 @@ public class MinimaxPlayerTest {
 	@Test
 	public void testPlay() {
 
+		long totalDuration = 0L;
+		long numberOfMoves = 0L;
+
 		for (Colour ownColour : Colour.values()) {
 
 			for (int seed : Arrays.asList(13, 47, 71)) {
@@ -33,7 +36,13 @@ public class MinimaxPlayerTest {
 				int m = 1;
 				while (!boardPosition.getPossibleMoves().isEmpty()) {
 					Player player = players.get(boardPosition.getColourToMove());
+					long starttime = System.currentTimeMillis();
 					Move move = player.makeMove(boardPosition);
+					long duration = System.currentTimeMillis() - starttime;
+					if (player.getColour().equals(ownColour)) {
+						totalDuration += duration;
+						++numberOfMoves;
+					}
 					if (boardPosition.getColourToMove().equals(Colour.White)) {
 						System.out.print(Integer.toString(m) + ": " + move.toString());
 						++m;
@@ -48,5 +57,8 @@ public class MinimaxPlayerTest {
 				assertTrue(boardPosition.isCheckmate() && boardPosition.getColourToMove().equals(ownColour.opposite()));
 			}
 		}
+
+		double avgDuration = (double) totalDuration / (double) numberOfMoves;
+		System.out.println("average thinking duration: " + avgDuration);
 	}
 }
