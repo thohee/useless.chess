@@ -28,7 +28,7 @@ public class PGNWriter {
 			fileWriter.write("[Result \"" + gameReport.getResult().toString() + "\"]\n");
 		}
 		if (gameReport.getMoves() != null) {
-			fileWriter.write(Move.toString(gameReport.getMoves()));
+			fileWriter.write(Move.toString(gameReport.getMoves(), true));
 		}
 		if (gameReport.getResult() != null && !gameReport.getResult().equals(Result.None)) {
 			fileWriter.write("  " + gameReport.getResult().toString());

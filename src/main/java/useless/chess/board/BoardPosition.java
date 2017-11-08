@@ -541,7 +541,7 @@ public class BoardPosition {
 	}
 
 	public String showPerformedMoves() {
-		return Move.toString(getPerformedMoves());
+		return Move.toString(getPerformedMoves(), false);
 	}
 
 	public String getResult() {

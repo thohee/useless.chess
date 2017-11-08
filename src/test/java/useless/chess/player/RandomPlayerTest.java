@@ -13,7 +13,7 @@ public class RandomPlayerTest {
 	@Test
 	public void testPlay() {
 
-		for (long i = 1; i <= 100; ++i) {
+		for (long i = 1; i <= 10; ++i) {
 
 			long seed = 13L * i;
 			System.out.print(Long.toString(seed) + ": ");
@@ -31,9 +31,6 @@ public class RandomPlayerTest {
 			System.out
 					.println(Long.toString(boardPosition.getDepth()) + " moves, result: " + boardPosition.getResult());
 			assertTrue(boardPosition.isCheckmate() || boardPosition.isDraw());
-			if (!boardPosition.isDraw()) {
-				System.out.println(boardPosition.toString());
-			}
 		}
 	}
 

@@ -126,8 +126,17 @@ public class Move {
 
 	@Override
 	public String toString() {
+            return toString(false);
+        }
+        
+	public String toString(boolean pgn) {
 		if (castling != null) {
+                    if (pgn) {
+                        return Castling.KingSide.equals(castling) ? "O-O" : "O-O-O";
+                    }
+                    else {
 			return Castling.KingSide.equals(castling) ? "0-0" : "0-0-0";
+                    }
 		} else {
 			return (Figure.Pawn.equals(figure) ? "" : figure.toString()) + from.toString()
 					+ (capture != Capture.None ? "x" : "-") + to.toString()
@@ -185,14 +194,14 @@ public class Move {
 		return move;
 	}
 
-	public static String toString(List<Move> moves) {
+	public static String toString(List<Move> moves, boolean pgn) {
 		StringBuilder sb = new StringBuilder();
 		int m = 1;
 		for (Move move : moves) {
 			if (m % 2 == 1) {
 				sb.append(Integer.toString((m + 1) / 2)).append(". ");
 			}
-			sb.append(move.toString()).append(m % 12 == 0 ? "\n" : " ");
+			sb.append(move.toString(pgn)).append(m % 12 == 0 ? "\n" : " ");
 			++m;
 		}
 		return sb.toString();
