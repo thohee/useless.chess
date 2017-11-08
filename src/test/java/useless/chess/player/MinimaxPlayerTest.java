@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import useless.chess.board.BoardPosition;
@@ -14,6 +15,7 @@ import useless.chess.board.Move;
 
 public class MinimaxPlayerTest {
 
+	@Ignore
 	@Test
 	public void testPlay() {
 

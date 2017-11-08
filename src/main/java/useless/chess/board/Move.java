@@ -159,14 +159,25 @@ public class Move {
 				Figure figure = Figure.parse(s.substring(0, 1));
 				int i = figure.equals(Figure.Pawn) ? 0 : 1;
 				Coordinate from = Coordinate.parse(s.substring(i, i + 2));
-				boolean capture = s.charAt(i + 2) == 'x';
+				boolean isCapture = s.charAt(i + 2) == 'x';
 				Coordinate to = Coordinate.parse(s.substring(i + 3, i + 5));
 				boolean enPassant = s.endsWith("e.p.");
 				if (from == null || to == null) {
 					throw new IllegalMoveFormatException(s);
 				}
-				move = new Move(colour, figure, from, to,
-						capture ? (enPassant ? Capture.EnPassant : Capture.Regular) : Capture.None);
+				Piece newPiece = null;
+				if (figure.equals(Figure.Pawn) && !enPassant && ((colour.equals(Colour.White) && to.getRow() == 7)
+						|| (colour.equals(Colour.Black) && to.getRow() == 0))) {
+					Figure newFigure = Figure.parse(s.substring(i + 5));
+					assert (newFigure != Figure.Pawn);
+					newPiece = new Piece(colour, newFigure);
+				}
+				Capture capture = isCapture ? (enPassant ? Capture.EnPassant : Capture.Regular) : Capture.None;
+				if (newPiece == null) {
+					move = new Move(colour, figure, from, to, capture);
+				} else {
+					move = new Move(colour, figure, from, to, capture, newPiece);
+				}
 			} else {
 				throw new IllegalMoveFormatException(s);
 			}

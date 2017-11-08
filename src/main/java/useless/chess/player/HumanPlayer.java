@@ -34,7 +34,7 @@ public class HumanPlayer extends Player {
 					if (inputMove.getCastling() == null) {
 						Piece piece = boardPosition.get(inputMove.getFrom());
 						if (piece != null) {
-							// TODO: en passant
+							// TODO: en passant and promotion
 							Move.Capture capture = boardPosition.get(inputMove.getTo()) != null ? Move.Capture.Regular
 									: Move.Capture.None;
 							Move intendedMove = new Move(boardPosition.getColourToMove(), piece.getFigure(),

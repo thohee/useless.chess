@@ -7,10 +7,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.ExpectedException;
 
-import useless.chess.board.Colour;
-import useless.chess.board.Coordinate;
-import useless.chess.board.Figure;
-import useless.chess.board.Move;
 import useless.chess.board.Move.Capture;
 import useless.chess.board.Move.Castling;
 import useless.chess.board.Move.IllegalMoveFormatException;
@@ -41,6 +37,12 @@ public class MoveTest {
 					Move.parse(c, "a5xb6e.p."));
 
 		}
+
+		assertEquals(new Move(Colour.White, Figure.Pawn, Coordinate.parse("a7"), Coordinate.parse("a8"), Capture.None,
+				new Piece(Colour.White, Figure.Queen)), Move.parse(Colour.White, "a7-a8Q"));
+
+		assertEquals(new Move(Colour.Black, Figure.Pawn, Coordinate.parse("a2"), Coordinate.parse("a1"), Capture.None,
+				new Piece(Colour.Black, Figure.Queen)), Move.parse(Colour.Black, "a2-a1Q"));
 
 		expectException("Pa2-a3");
 		expectException("a2a3");
