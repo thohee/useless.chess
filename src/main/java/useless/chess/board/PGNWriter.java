@@ -3,8 +3,6 @@ package useless.chess.board;
 import java.io.FileWriter;
 import java.io.IOException;
 
-import useless.chess.board.GameReport.Result;
-
 public class PGNWriter {
 
 	public static void write(GameReport gameReport, String filename) throws IOException {

@@ -8,7 +8,6 @@ import useless.chess.board.BoardPosition;
 import useless.chess.board.Colour;
 import useless.chess.board.Move;
 import useless.chess.board.Move.IllegalMoveFormatException;
-import useless.chess.board.Piece;
 
 public class HumanPlayer extends Player {
 
@@ -27,24 +26,7 @@ public class HumanPlayer extends Player {
 				if (input.toLowerCase().equals("quit")) {
 					throw new RuntimeException("quit");
 				}
-				move = Move.parse(boardPosition.getColourToMove(), input);
-				if (!boardPosition.getPossibleMoves().contains(move)) {
-					Move inputMove = move;
-					move = null;
-					if (inputMove.getCastling() == null) {
-						Piece piece = boardPosition.get(inputMove.getFrom());
-						if (piece != null) {
-							// TODO: en passant and promotion
-							Move.Capture capture = boardPosition.get(inputMove.getTo()) != null ? Move.Capture.Regular
-									: Move.Capture.None;
-							Move intendedMove = new Move(boardPosition.getColourToMove(), piece.getFigure(),
-									inputMove.getFrom(), inputMove.getTo(), capture);
-							if (boardPosition.getPossibleMoves().contains(intendedMove)) {
-								move = intendedMove;
-							}
-						}
-					}
-				}
+				move = boardPosition.guessMove(input);
 			} catch (IllegalMoveFormatException e) {
 				System.out.println(e.getMessage());
 			} catch (IOException e) {
