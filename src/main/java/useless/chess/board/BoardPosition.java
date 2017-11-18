@@ -16,6 +16,7 @@ import java.util.stream.Collectors;
 
 import useless.chess.board.Move.Capture;
 import useless.chess.board.Move.Castling;
+import useless.chess.board.Move.IllegalMoveFormatException;
 
 public class BoardPosition {
 
@@ -581,6 +582,70 @@ public class BoardPosition {
 
 	public Move getLastMove() {
 		return lastMove;
+	}
+
+	public Move guessMove(String input) throws IllegalMoveFormatException {
+		Move move = Move.parse(getColourToMove(), input);
+		if (!getPossibleMoves().contains(move)) {
+			Move intendedMove = move;
+			move = null;
+			if (intendedMove.getCastling() == null) {
+				Piece piece = get(intendedMove.getFrom());
+				if (piece != null) {
+					intendedMove = new Move(intendedMove.getColour(), piece.getFigure(), intendedMove.getFrom(),
+							intendedMove.getTo(), intendedMove.getCapture());
+					Piece targetPiece = get(intendedMove.getTo());
+					if (targetPiece != null) {
+						if (targetPiece.getColour().equals(piece.getColour().opposite())) {
+							// capture?
+							intendedMove = new Move(getColourToMove(), piece.getFigure(), intendedMove.getFrom(),
+									intendedMove.getTo(), Move.Capture.Regular);
+						} else {
+							// castling indicated by selecting king and rook?
+							if (piece.getFigure().equals(Figure.King) && targetPiece.getFigure().equals(Figure.Rook)) {
+								Castling castling = intendedMove.getTo().getColumn() == 7 ? Castling.KingSide
+										: Castling.QueenSide;
+								intendedMove = new Move(intendedMove.getColour(), castling);
+							} else if (piece.getFigure().equals(Figure.Rook)
+									&& targetPiece.getFigure().equals(Figure.King)) {
+								Castling castling = intendedMove.getFrom().getColumn() == 7 ? Castling.KingSide
+										: Castling.QueenSide;
+								intendedMove = new Move(intendedMove.getColour(), castling);
+							}
+						}
+					} else if (piece.getFigure().equals(Figure.Pawn)) {
+						// en passant?
+						intendedMove = new Move(intendedMove.getColour(), intendedMove.getFigure(),
+								intendedMove.getFrom(), intendedMove.getTo(), Capture.EnPassant);
+					} else if (piece.getFigure().equals(Figure.King)) {
+						// castling indicated by 2-step move of king?
+						int dc = Math.abs(intendedMove.getTo().getColumn() - intendedMove.getFrom().getColumn());
+						if (dc == 2) {
+							int c = intendedMove.getTo().getColumn();
+							if (c == 6) {
+								intendedMove = new Move(intendedMove.getColour(), Castling.KingSide);
+							} else if (c == 2) {
+								intendedMove = new Move(intendedMove.getColour(), Castling.QueenSide);
+							}
+						}
+					}
+					if (piece.getFigure().equals(Figure.Pawn)) {
+						if ((piece.getColour().equals(Colour.White) && intendedMove.getTo().getRow() == 7)
+								|| (piece.getColour().equals(Colour.Black) && intendedMove.getTo().getRow() == 0)) {
+							// TODO: promotion to knight would require player decision
+							// promotion to queen?
+							intendedMove = new Move(intendedMove.getColour(), intendedMove.getFigure(),
+									intendedMove.getFrom(), intendedMove.getTo(), intendedMove.getCapture(),
+									new Piece(intendedMove.getColour(), Figure.Queen));
+						}
+					}
+				}
+			}
+			if (getPossibleMoves().contains(intendedMove)) {
+				move = intendedMove;
+			}
+		}
+		return move;
 	}
 
 	// unit test methods

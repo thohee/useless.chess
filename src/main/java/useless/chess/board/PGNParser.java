@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
-import useless.chess.board.GameReport.Result;
 import useless.chess.board.Move.Capture;
 import useless.chess.board.Move.Castling;
 import useless.chess.board.Move.IllegalMoveFormatException;
