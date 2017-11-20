@@ -613,7 +613,9 @@ public class BoardPosition {
 								intendedMove = new Move(intendedMove.getColour(), castling);
 							}
 						}
-					} else if (piece.getFigure().equals(Figure.Pawn)) {
+					} else if (piece.getFigure().equals(Figure.Pawn) && ((piece.getColour().equals(Colour.White)
+							&& intendedMove.getTo().getRow() == 2)
+							|| (piece.getColour().equals(Colour.Black) && intendedMove.getTo().getRow() == 5))) {
 						// en passant?
 						intendedMove = new Move(intendedMove.getColour(), intendedMove.getFigure(),
 								intendedMove.getFrom(), intendedMove.getTo(), Capture.EnPassant);

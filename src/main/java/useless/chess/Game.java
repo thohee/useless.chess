@@ -105,7 +105,7 @@ public class Game extends Application implements Model, Controller {
 
 		mainView.update();
 
-		if (Colour.Black.equals(ownColour)) {
+		if (!boardPosition.getColourToMove().equals(ownColour) && !boardPosition.getPossibleMoves().isEmpty()) {
 			makeMove();
 		}
 	}

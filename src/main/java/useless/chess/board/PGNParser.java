@@ -93,7 +93,8 @@ public class PGNParser {
 				}
 			}
 			if (possibleMoves.isEmpty() || possibleMoves.size() > 1) {
-				throw new IllegalMoveFormatException(possibleMoves.toString() + " <> " + moveString);
+				throw new IllegalMoveFormatException(boardPosition.getPossibleMoves().toString() + " => "
+						+ possibleMoves.toString() + " <-> " + moveString);
 			}
 			return possibleMoves.iterator().next();
 		}

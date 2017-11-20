@@ -126,21 +126,20 @@ public class Move {
 
 	@Override
 	public String toString() {
-            return toString(false);
-        }
-        
+		return toString(false);
+	}
+
 	public String toString(boolean pgn) {
 		if (castling != null) {
-                    if (pgn) {
-                        return Castling.KingSide.equals(castling) ? "O-O" : "O-O-O";
-                    }
-                    else {
-			return Castling.KingSide.equals(castling) ? "0-0" : "0-0-0";
-                    }
+			if (pgn) {
+				return Castling.KingSide.equals(castling) ? "O-O" : "O-O-O";
+			} else {
+				return Castling.KingSide.equals(castling) ? "0-0" : "0-0-0";
+			}
 		} else {
 			return (Figure.Pawn.equals(figure) ? "" : figure.toString()) + from.toString()
 					+ (capture != Capture.None ? "x" : "-") + to.toString()
-					+ (newPiece != null ? newPiece.getFigure().toString() : "")
+					+ (newPiece != null ? "=" + newPiece.getFigure().toString() : "")
 					+ (capture.equals(Capture.EnPassant) ? "e.p." : "");
 		}
 	}
@@ -175,10 +174,11 @@ public class Move {
 					throw new IllegalMoveFormatException(s);
 				}
 				Piece newPiece = null;
-				if (figure.equals(Figure.Pawn) && !enPassant && ((colour.equals(Colour.White) && to.getRow() == 7)
-						|| (colour.equals(Colour.Black) && to.getRow() == 0))) {
-					Figure newFigure = Figure.parse(s.substring(i + 5));
-					assert (newFigure != Figure.Pawn);
+				if (figure.equals(Figure.Pawn) && !enPassant
+						&& ((colour.equals(Colour.White) && to.getRow() == 7)
+								|| (colour.equals(Colour.Black) && to.getRow() == 0))
+						&& s.length() > 6 && s.contains("=")) {
+					Figure newFigure = Figure.parse(s.substring(i + 6));
 					newPiece = new Piece(colour, newFigure);
 				}
 				Capture capture = isCapture ? (enPassant ? Capture.EnPassant : Capture.Regular) : Capture.None;
