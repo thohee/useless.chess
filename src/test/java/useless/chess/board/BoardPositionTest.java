@@ -586,4 +586,70 @@ public class BoardPositionTest {
 			}
 		}
 	}
+
+	@Test
+	public void testGetMove() {
+		{
+			BoardPosition bp = BoardPosition.getInitialPosition();
+			bp = bp.performMove(bp.getMove(Coordinate.parse("e2"), Coordinate.parse("e4")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("d7"), Coordinate.parse("d5")));
+			assertEquals(new Move(Colour.White, Figure.Pawn, Coordinate.parse("e4"), Coordinate.parse("d5"),
+					Capture.Regular), bp.getMove(Coordinate.parse("e4"), Coordinate.parse("d5")));
+		}
+		{
+			// castlings white-king-side, black-queen-side
+			BoardPosition bp = BoardPosition.getInitialPosition();
+			bp = bp.performMove(bp.getMove(Coordinate.parse("e2"), Coordinate.parse("e4")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("d7"), Coordinate.parse("d5")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("f1"), Coordinate.parse("d3")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("c8"), Coordinate.parse("e6")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("g1"), Coordinate.parse("f3")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("b8"), Coordinate.parse("c6")));
+			Move whiteKingSideCastling = new Move(Colour.White, Castling.KingSide);
+			assertEquals(whiteKingSideCastling, bp.getMove(Coordinate.parse("e1"), Coordinate.parse("g1")));
+			bp = bp.performMove(whiteKingSideCastling);
+			bp = bp.performMove(bp.getMove(Coordinate.parse("d8"), Coordinate.parse("d6")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("d1"), Coordinate.parse("e2")));
+			Move blackQueenSideCastling = new Move(Colour.Black, Castling.QueenSide);
+			assertEquals(blackQueenSideCastling, bp.getMove(Coordinate.parse("e8"), Coordinate.parse("c8")));
+		}
+		{
+			// castlings white-queen-side, black-king-side
+			BoardPosition bp = BoardPosition.getInitialPosition();
+			bp = bp.performMove(bp.getMove(Coordinate.parse("d2"), Coordinate.parse("d4")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("e7"), Coordinate.parse("e5")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("c1"), Coordinate.parse("e3")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("f8"), Coordinate.parse("d6")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("b1"), Coordinate.parse("c3")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("g8"), Coordinate.parse("f6")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("d1"), Coordinate.parse("d3")));
+			Move blackKingSideCastling = new Move(Colour.Black, Castling.KingSide);
+			assertEquals(blackKingSideCastling, bp.getMove(Coordinate.parse("e8"), Coordinate.parse("g8")));
+			bp = bp.performMove(blackKingSideCastling);
+			Move whiteQueenSideCastling = new Move(Colour.White, Castling.QueenSide);
+			assertEquals(whiteQueenSideCastling, bp.getMove(Coordinate.parse("e1"), Coordinate.parse("c1")));
+		}
+		{
+			// en passant by white
+			BoardPosition bp = BoardPosition.getInitialPosition();
+			bp = bp.performMove(bp.getMove(Coordinate.parse("e2"), Coordinate.parse("e4")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("d7"), Coordinate.parse("d5")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("e4"), Coordinate.parse("e5")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("f7"), Coordinate.parse("f5")));
+			assertEquals(new Move(Colour.White, Figure.Pawn, Coordinate.parse("e5"), Coordinate.parse("f6"),
+					Capture.EnPassant), bp.getMove(Coordinate.parse("e5"), Coordinate.parse("f6")));
+		}
+		{
+			// en passant by black
+			BoardPosition bp = BoardPosition.getInitialPosition();
+			bp = bp.performMove(bp.getMove(Coordinate.parse("e2"), Coordinate.parse("e4")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("d7"), Coordinate.parse("d5")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("f2"), Coordinate.parse("f3")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("d5"), Coordinate.parse("d4")));
+			bp = bp.performMove(bp.getMove(Coordinate.parse("c2"), Coordinate.parse("c4")));
+			assertEquals(new Move(Colour.Black, Figure.Pawn, Coordinate.parse("d4"), Coordinate.parse("c3"),
+					Capture.EnPassant), bp.getMove(Coordinate.parse("d4"), Coordinate.parse("c3")));
+		}
+	}
+
 }

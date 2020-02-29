@@ -7,6 +7,7 @@ import org.junit.Test;
 import useless.chess.board.BoardPosition;
 import useless.chess.board.Colour;
 import useless.chess.board.Move;
+import useless.chess.player.Player.Params;
 
 public class RandomPlayerTest {
 
@@ -25,7 +26,7 @@ public class RandomPlayerTest {
 
 			while (!boardPosition.getPossibleMoves().isEmpty()) {
 				Player player = boardPosition.getColourToMove().equals(Colour.White) ? white : black;
-				Move move = player.makeMove(boardPosition);
+				Move move = player.makeMove(boardPosition, new Params());
 				boardPosition = boardPosition.performMove(move);
 			}
 			System.out

@@ -25,6 +25,7 @@ public class BoardPosition {
 	private Move lastMove = null;
 	private BoardPosition predecessor = null;
 	private int movesWithoutPawnAndCapture = 0;
+	private int repetitions = 0;
 	private long depth = 0;
 
 	// cached computation results
@@ -37,6 +38,24 @@ public class BoardPosition {
 	BoardPosition() {
 		map = new HashMap<>();
 		castlingPieces = new HashSet<>();
+	}
+
+	@Override
+	public int hashCode() {
+		return repetitions + 10 * movesWithoutPawnAndCapture + 1000 * map.hashCode();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj != null && obj instanceof BoardPosition) {
+			BoardPosition other = (BoardPosition) obj;
+			return this.depth == other.depth && this.repetitions == other.repetitions
+					&& this.movesWithoutPawnAndCapture == other.movesWithoutPawnAndCapture && this.map.equals(other.map)
+					&& this.castlingPieces.equals(other.castlingPieces);
+		} else {
+			return false;
+		}
+
 	}
 
 	public static BoardPosition getInitialPosition() {
@@ -103,22 +122,7 @@ public class BoardPosition {
 	}
 
 	private boolean repeatedPosition3times() {
-		BoardPosition previous = predecessor;
-		int repetitions = 0;
-		for (int i = 1; i <= 8; ++i) {
-			if (previous == null) {
-				break;
-			}
-			if (i % 4 == 0) {
-				if (this.map.equals(previous.map)) {
-					++repetitions;
-				} else {
-					break;
-				}
-			}
-			previous = previous.predecessor;
-		}
-		return repetitions == 2;
+		return this.repetitions >= 2;
 	}
 
 	public BoardPosition performMove(Move move) {
@@ -144,6 +148,22 @@ public class BoardPosition {
 		if (moveWithoutPawnAndCapture) {
 			newBoardPosition.movesWithoutPawnAndCapture = this.movesWithoutPawnAndCapture + 1;
 		} // else reset to default 0
+		{
+			BoardPosition previous = this;
+			for (int i = 1; i <= 8; ++i) {
+				if (previous == null) {
+					break;
+				}
+				if (i % 4 == 0) {
+					if (newBoardPosition.map.equals(previous.map)) {
+						++newBoardPosition.repetitions;
+					} else {
+						break;
+					}
+				}
+				previous = previous.predecessor;
+			}
+		}
 		return newBoardPosition;
 	}
 
@@ -584,6 +604,34 @@ public class BoardPosition {
 		return lastMove;
 	}
 
+	public Move getMove(Coordinate from, Coordinate to) {
+		Piece piece = map.get(from);
+		assert (piece != null);
+		assert (piece.getColour().equals(getColourToMove()));
+		Capture capture = map.get(to) != null ? Capture.Regular : Capture.None;
+		if (piece.getFigure().equals(Figure.Pawn) && ((piece.getColour().equals(Colour.White) && to.getRow() == 5)
+				|| (piece.getColour().equals(Colour.Black) && to.getRow() == 2))) {
+			capture = Capture.EnPassant;
+		}
+		Move move = null;
+		if (piece.getFigure().equals(Figure.King) && Arrays.asList(0, 7).contains(from.getRow())
+				&& Math.abs(from.getColumn() - to.getColumn()) == 2) {
+			assert (Arrays.asList(0, 7).contains(to.getRow()));
+			assert (Arrays.asList(2, 6).contains(to.getColumn()));
+			Castling castling = to.getColumn() == 6 ? Castling.KingSide : Castling.QueenSide;
+			move = new Move(getColourToMove(), castling);
+		} else {
+			if (piece.getFigure().equals(Figure.Pawn) && Arrays.asList(0, 7).contains(to.getRow())) {
+				Piece newPiece = new Piece(piece.getColour(), Figure.Queen);
+				move = new Move(getColourToMove(), piece.getFigure(), from, to, capture, newPiece);
+			} else {
+				move = new Move(getColourToMove(), piece.getFigure(), from, to, capture);
+			}
+		}
+		assert (getPossibleMoves().contains(move));
+		return move;
+	}
+
 	public Move guessMove(String input) throws IllegalMoveFormatException {
 		Move move = Move.parse(getColourToMove(), input);
 		if (!getPossibleMoves().contains(move)) {
@@ -634,8 +682,7 @@ public class BoardPosition {
 					if (piece.getFigure().equals(Figure.Pawn)) {
 						if ((piece.getColour().equals(Colour.White) && intendedMove.getTo().getRow() == 7)
 								|| (piece.getColour().equals(Colour.Black) && intendedMove.getTo().getRow() == 0)) {
-							// TODO: promotion to knight would require player decision
-							// promotion to queen?
+							// promotion to knight would require player decision
 							intendedMove = new Move(intendedMove.getColour(), intendedMove.getFigure(),
 									intendedMove.getFrom(), intendedMove.getTo(), intendedMove.getCapture(),
 									new Piece(intendedMove.getColour(), Figure.Queen));

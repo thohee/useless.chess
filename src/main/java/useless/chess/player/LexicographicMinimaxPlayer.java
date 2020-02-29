@@ -54,10 +54,6 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 
 	private static Value MAXIMUM = new ValueVector(Integer.MAX_VALUE);
 
-	private static final int CUTOFF_DEPTH = 3;
-
-	private static final int MAX_DEPTH = 5;
-
 	private BoardPosition lastThreatAnalysisBoardPosition = null;
 	private int lastThreatAnalysisValue = 0;
 
@@ -201,16 +197,6 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 	@Override
 	protected Value getMax() {
 		return MAXIMUM;
-	}
-
-	@Override
-	protected int getMaxDepth() {
-		return MAX_DEPTH;
-	}
-
-	@Override
-	protected int getCutoffDepth() {
-		return CUTOFF_DEPTH;
 	}
 
 	private class MoveComparator implements Comparator<Move> {

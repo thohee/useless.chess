@@ -39,10 +39,10 @@ public class MoveTest {
 		}
 
 		assertEquals(new Move(Colour.White, Figure.Pawn, Coordinate.parse("a7"), Coordinate.parse("a8"), Capture.None,
-				new Piece(Colour.White, Figure.Queen)), Move.parse(Colour.White, "a7-a8Q"));
+				new Piece(Colour.White, Figure.Queen)), Move.parse(Colour.White, "a7-a8=Q"));
 
 		assertEquals(new Move(Colour.Black, Figure.Pawn, Coordinate.parse("a2"), Coordinate.parse("a1"), Capture.None,
-				new Piece(Colour.Black, Figure.Queen)), Move.parse(Colour.Black, "a2-a1Q"));
+				new Piece(Colour.Black, Figure.Queen)), Move.parse(Colour.Black, "a2-a1=Q"));
 
 		expectException("Pa2-a3");
 		expectException("a2a3");
@@ -58,5 +58,16 @@ public class MoveTest {
 			assertTrue(s, false);
 		} catch (Move.IllegalMoveFormatException e) {
 		}
+	}
+
+	@Test
+	public void testAsUciResponse() {
+		assertEquals("g1f3",
+				new Move(Colour.White, Figure.Knight, Coordinate.parse("g1"), Coordinate.parse("f3"), Capture.None)
+						.asUciMove());
+		assertEquals("e1g1", new Move(Colour.White, Castling.KingSide).asUciMove());
+		assertEquals("e8g8", new Move(Colour.Black, Castling.KingSide).asUciMove());
+		assertEquals("e1c1", new Move(Colour.White, Castling.QueenSide).asUciMove());
+		assertEquals("e8c8", new Move(Colour.Black, Castling.QueenSide).asUciMove());
 	}
 }

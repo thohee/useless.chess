@@ -16,6 +16,24 @@ public abstract class Player {
 		return colour;
 	}
 
-	public abstract Move makeMove(BoardPosition boardPosition);
+	public static class Params {
+		public Long maxTimeInMillis = null;
+		public Integer maxDepthInPlies = null;
+		public boolean infinite = false;
+	}
+
+	public abstract Move makeMove(BoardPosition boardPosition, Params params);
+
+	public void stop() {
+		// can be implemented by engines to accept a concurrent interrupt signal for makeMove 
+	}
+
+	public static interface OutputWriter {
+		void writeLine(String line);
+	}
+
+	public void setOutputWriter(OutputWriter stream) {
+		// can be implemented by engines to output debug information
+	}
 
 }

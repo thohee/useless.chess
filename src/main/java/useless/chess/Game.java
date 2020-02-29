@@ -1,212 +1,178 @@
 package useless.chess;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
-import java.lang.reflect.Constructor;
-import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Scanner;
 
-import javafx.application.Application;
-import javafx.stage.Stage;
 import useless.chess.board.BoardPosition;
-import useless.chess.board.Colour;
-import useless.chess.board.GameReport;
+import useless.chess.board.Coordinate;
 import useless.chess.board.Move;
-import useless.chess.board.Move.IllegalMoveFormatException;
-import useless.chess.board.PGNParser;
-import useless.chess.board.PGNWriter;
-import useless.chess.board.Result;
-import useless.chess.gui.Controller;
-import useless.chess.gui.MainWindow;
-import useless.chess.gui.Model;
-import useless.chess.gui.View;
-import useless.chess.player.HumanPlayer;
 import useless.chess.player.LexicographicMinimaxPlayer;
 import useless.chess.player.Player;
 
-public class Game extends Application implements Model, Controller {
+public class Game {
 
-	private static final String gameFilename = "game.pgn";
+	private static final String _uci = "uci";
+	private static final String _uciok = "uciok";
+	private static final String _info = "info string ";
+	private static final String _isready = "isready";
+	private static final String _readyok = "readyok";
+	private static final String _position = "position";
+	private static final String _startpos = "startpos";
+	private static final String _moves = "moves";
+	private static final String _go = "go";
+	private static final String _depth = "depth";
+	private static final String _movetime = "movetime";
+	private static final String _infinite = "infinite";
+	private static final String _stop = "stop";
+	private static final String _bestmove = "bestmove ";
+	private static final String _quit = "quit";
 
-	private enum StartMode {
-		ResumeGame, StartNew;
-		@Override
-		public String toString() {
-			switch (this) {
-			case ResumeGame:
-				return "resume game";
-			case StartNew:
-			default:
-				return "start new game";
-			}
-		}
-
-	}
-
-	private MainWindow mainView;
-	private Colour ownColour;
-	private Player opponent;
+	private Player player;
 	private BoardPosition boardPosition;
-	private GameReport gameReport;
 	private Thread playerThread;
 
+	private InputStream inStream;
+	private PrintStream outStream;
+
+	private static class OutputToStreamWriter implements Player.OutputWriter {
+
+		private PrintStream printStream;
+
+		OutputToStreamWriter(PrintStream printStream) {
+			assert (printStream != null);
+			this.printStream = printStream;
+		}
+
+		@Override
+		public void writeLine(String line) {
+			printStream.println(_info + line);
+		}
+
+	}
+
 	public static void main(String[] args) {
-		launch(args);
+		Game game = new Game(System.in, System.out);
+		game.playUciGame();
 	}
 
-	@Override
-	public void start(Stage stage) throws Exception {
+	Game(InputStream inputStream, PrintStream outputStream) {
+		this.inStream = inputStream;
+		this.outStream = outputStream;
+	}
 
-		mainView = new MainWindow(stage, this, this);
-		mainView.show();
+	private void writeLine(String line) {
+		outStream.println(line);
+	}
 
-		boolean resumeSavegame = false;
-		File file = new File(gameFilename);
-		if (file.exists()) {
-			StartMode startMode = mainView.choose(Arrays.asList(StartMode.ResumeGame, StartMode.StartNew));
-			resumeSavegame = startMode.equals(StartMode.ResumeGame);
-		}
-
-		boardPosition = BoardPosition.getInitialPosition();
-
-		Player whitePlayer = null;
-		Player blackPlayer = null;
-		if (resumeSavegame) {
-			List<GameReport> gameReports = PGNParser.parse(gameFilename);
-			GameReport gameReport = gameReports.get(0);
-			Class<?> whitePlayerClass = Player.class.getClassLoader().loadClass(gameReport.getWhite());
-			Class<?> blackPlayerClass = Player.class.getClassLoader().loadClass(gameReport.getBlack());
-			Constructor<?> whitePlayerConstructor = whitePlayerClass.getConstructor(Colour.class);
-			whitePlayer = (Player) whitePlayerConstructor.newInstance(Colour.White);
-			Constructor<?> blackPlayerConstructor = blackPlayerClass.getConstructor(Colour.class);
-			blackPlayer = (Player) blackPlayerConstructor.newInstance(Colour.Black);
-			for (Move move : gameReport.getMoves()) {
-				boardPosition = boardPosition.performMove(move);
-			}
-			ownColour = whitePlayer instanceof HumanPlayer ? Colour.White : Colour.Black;
-			opponent = ownColour.equals(Colour.White) ? blackPlayer : whitePlayer;
+	void playUciGame() {
+		Scanner scanner = new Scanner(this.inStream);
+		if (_uci.equals(scanner.nextLine())) {
+			writeLine("id name useless.chess");
+			writeLine("id author thohee");
+			writeLine(_uciok);
+			while (processCommand(scanner.nextLine()))
+				;
+			scanner.close();
 		} else {
-			file.delete();
-			ownColour = mainView.choose(Arrays.asList(Colour.White, Colour.Black));
-			opponent = new LexicographicMinimaxPlayer(ownColour.opposite());
-			whitePlayer = ownColour.equals(Colour.White) ? new HumanPlayer(Colour.White) : opponent;
-			blackPlayer = ownColour.equals(Colour.Black) ? new HumanPlayer(Colour.Black) : opponent;
+			writeLine(_info + "I only understand uci.");
 		}
+		writeLine(_info + "Goodbye");
+	}
 
-		gameReport = new GameReport();
-		gameReport.setEvent("useless.chess");
-		gameReport.setWhite(whitePlayer.getClass().getName());
-		gameReport.setBlack(blackPlayer.getClass().getName());
-		updateReport();
-
-		mainView.update();
-
-		if (!boardPosition.getColourToMove().equals(ownColour) && !boardPosition.getPossibleMoves().isEmpty()) {
-			makeMove();
+	private boolean processCommand(String inputLine) {
+		try {
+			if (_isready.equals(inputLine)) {
+				writeLine(_readyok);
+				return true;
+			}
+			if (inputLine != null && inputLine.startsWith(_position)) {
+				String startPosAndMoves = inputLine.substring(_position.length()).trim();
+				if (startPosAndMoves.startsWith(_startpos)) {
+					this.boardPosition = BoardPosition.getInitialPosition();
+					String maybeMoves = startPosAndMoves.substring(_startpos.length()).trim();
+					if (maybeMoves.startsWith(_moves)) {
+						String[] moveTokens = maybeMoves.substring(_moves.length()).trim().split(" ");
+						for (String moveToken : moveTokens) {
+							performMove(moveToken);
+						}
+					}
+					this.player = new LexicographicMinimaxPlayer(boardPosition.getColourToMove());
+					this.player.setOutputWriter(new OutputToStreamWriter(outStream));
+					return true;
+				} else {
+					writeLine(_info + "Cannot read position.");
+					return false;
+				}
+			}
+			if (inputLine.startsWith(_go)) {
+				if (boardPosition == null || player == null) {
+					writeLine("unknown position");
+					return false;
+				}
+				Player.Params params = new Player.Params();
+				String[] tokens = inputLine.substring(_go.length()).trim().split(" ");
+				int i = 0;
+				while (i < tokens.length) {
+					if (tokens[i].equals(_infinite)) {
+						params.infinite = true;
+					} else if (tokens[i].equals(_depth)) {
+						params.maxDepthInPlies = Integer.parseInt(tokens[i + 1]);
+						++i;
+					} else if (tokens[i].equals(_movetime)) {
+						params.maxTimeInMillis = Long.parseLong(tokens[i + 1]);
+						++i;
+					}
+					++i;
+				}
+				findBestMoveConcurrently(params);
+				return true;
+			}
+			if (_stop.equals(inputLine)) {
+				if (this.player != null) {
+					this.player.stop();
+				}
+				return true;
+			}
+			if (_quit.equals(inputLine)) {
+				if (this.player != null) {
+					this.player.stop();
+				}
+				if (this.playerThread != null && this.playerThread.isAlive()) {
+					this.playerThread.join(100);
+				}
+				return false;
+			}
+			return true;
+		} catch (Throwable e) {
+			writeLine(_info + e.getMessage());
+			return false;
 		}
 	}
 
-	@Override
-	public void stop() {
+	private void performMove(String moveToken) {
+		Coordinate from = Coordinate.parse(moveToken.substring(0, 2));
+		Coordinate to = Coordinate.parse(moveToken.substring(2, 4));
+		Move move = boardPosition.getMove(from, to);
+		boardPosition = boardPosition.performMove(move);
+	}
+
+	private void findBestMoveConcurrently(Player.Params params) {
 		if (playerThread != null && playerThread.isAlive()) {
+			player.stop();
 			try {
-				playerThread.join();
+				playerThread.join(100);
 			} catch (InterruptedException e) {
 			}
 		}
-	}
-
-	private void writeReport() {
-		gameReport.setMoves(boardPosition.getPerformedMoves());
-		try {
-			PGNWriter.write(gameReport, gameFilename);
-		} catch (IOException e) {
-			mainView.showMsg(e.getClass().getSimpleName() + ": " + e.getMessage());
-		}
-	}
-
-	private void updateReport() {
-		if (boardPosition.isDraw()) {
-			gameReport.setResult(Result.Draw);
-		} else if (boardPosition.isCheckmate()) {
-			Colour winner = boardPosition.getColourToMove().opposite();
-			gameReport.setResult(winner.equals(Colour.White) ? Result.White : Result.Black);
-		}
-		writeReport();
-	}
-
-	private void makeMove() {
 		playerThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				try {
-					Move move = opponent.makeMove(boardPosition);
-					boardPosition = boardPosition.performMove(move);
-					updateReport();
-					mainView.update();
-				} catch (Throwable e) {
-					String msg = e.getMessage();
-					try {
-						final Charset charset = StandardCharsets.UTF_8;
-						ByteArrayOutputStream baos = new ByteArrayOutputStream();
-						PrintStream ps = new PrintStream(baos, true, charset.name());
-						e.printStackTrace(ps);
-						msg = new String(baos.toByteArray(), charset);
-						ps.close();
-						baos.close();
-					} catch (IOException e1) {
-					}
-					mainView.showMsg(msg);
-				}
+				Move move = player.makeMove(boardPosition, params);
+				writeLine(_bestmove + move.asUciMove());
 			}
 		});
 		playerThread.start();
-	}
-
-	@Override
-	public void executeCommand(String cmd) {
-		if (cmd != null && cmd.toLowerCase().equals("quit")) {
-			writeReport();
-			mainView.close();
-			return;
-		}
-		try {
-			Move move = boardPosition.guessMove(cmd);
-			if (move != null) {
-				boardPosition = boardPosition.performMove(move);
-				updateReport();
-				mainView.update();
-				makeMove();
-			} else {
-				mainView.update();
-			}
-		} catch (IllegalMoveFormatException e) {
-			mainView.update();
-		}
-	}
-
-	@Override
-	public void registerListener(View view) {
-		assert (view == mainView);
-	}
-
-	@Override
-	public BoardPosition getBoardPosition() {
-		return boardPosition;
-	}
-
-	@Override
-	public Colour getOwnColour() {
-		return ownColour;
-	}
-
-	@Override
-	public Result getResult() {
-		return gameReport.getResult() != null ? gameReport.getResult() : Result.None;
 	}
 
 }

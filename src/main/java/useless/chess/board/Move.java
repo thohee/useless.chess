@@ -144,6 +144,17 @@ public class Move {
 		}
 	}
 
+	public String asUciMove() {
+		if (castling != null) {
+			String row = colour.equals(Colour.White) ? "1" : "8";
+			String fromColumn = "e";
+			String toColumn = castling.equals(Castling.KingSide) ? "g" : "c";
+			return fromColumn + row + toColumn + row;
+		} else {
+			return from.toString() + to.toString();
+		}
+	}
+
 	public static class IllegalMoveFormatException extends Exception {
 
 		private static final long serialVersionUID = 5113928583330763865L;

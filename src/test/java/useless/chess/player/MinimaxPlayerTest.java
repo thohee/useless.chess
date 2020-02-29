@@ -19,6 +19,9 @@ public class MinimaxPlayerTest {
 	@Test
 	public void testPlay() {
 
+		Player.Params params = new Player.Params();
+		params.maxDepthInPlies = 5;
+
 		long totalDuration = 0L;
 		long numberOfMoves = 0L;
 
@@ -27,7 +30,8 @@ public class MinimaxPlayerTest {
 			for (int seed : Arrays.asList(13, 47, 71)) {
 
 				Player opponent = new RandomPlayer(ownColour.opposite(), seed);
-				Player self = new LexicographicMinimaxPlayer(ownColour);
+				LexicographicMinimaxPlayer self = new LexicographicMinimaxPlayer(ownColour);
+				self.setUseTranspositionTable();
 
 				Map<Colour, Player> players = new HashMap<>();
 				players.put(opponent.getColour(), opponent);
@@ -39,7 +43,7 @@ public class MinimaxPlayerTest {
 				while (!boardPosition.getPossibleMoves().isEmpty()) {
 					Player player = players.get(boardPosition.getColourToMove());
 					long starttime = System.currentTimeMillis();
-					Move move = player.makeMove(boardPosition);
+					Move move = player.makeMove(boardPosition, params);
 					long duration = System.currentTimeMillis() - starttime;
 					if (player.getColour().equals(ownColour)) {
 						totalDuration += duration;
@@ -49,10 +53,12 @@ public class MinimaxPlayerTest {
 						System.out.print(Integer.toString(m) + ": " + move.toString());
 						++m;
 					} else {
-						System.out.print(move.toString());
+						System.out.println(" " + move.toString());
 					}
-					System.out.print(" ");
 					boardPosition = boardPosition.performMove(move);
+				}
+				if (boardPosition.getColourToMove().equals(Colour.Black)) {
+					System.out.println();
 				}
 				System.out.println(boardPosition.getResult());
 				System.out.println(boardPosition.toString());

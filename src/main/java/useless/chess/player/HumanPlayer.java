@@ -16,7 +16,7 @@ public class HumanPlayer extends Player {
 	}
 
 	@Override
-	public Move makeMove(BoardPosition boardPosition) {
+	public Move makeMove(BoardPosition boardPosition, Params params) {
 		Move move = null;
 		while (move == null) {
 			System.out.println("enter valid move or 'quit': ");

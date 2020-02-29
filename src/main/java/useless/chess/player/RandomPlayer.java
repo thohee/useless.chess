@@ -1,5 +1,6 @@
 package useless.chess.player;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
@@ -22,8 +23,8 @@ public class RandomPlayer extends Player {
 	}
 
 	@Override
-	public Move makeMove(BoardPosition boardPosition) {
-		List<Move> possibleMoves = boardPosition.getPossibleMoves();
+	public Move makeMove(BoardPosition boardPosition, Params params) {
+		List<Move> possibleMoves = new ArrayList<>(boardPosition.getPossibleMoves());
 		return possibleMoves.get(randomGenerator.nextInt(possibleMoves.size()));
 	}
 
