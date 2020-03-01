@@ -1,2 +1,2 @@
 # useless.chess
-Chess program written in Java
+Chess engine written in Java
