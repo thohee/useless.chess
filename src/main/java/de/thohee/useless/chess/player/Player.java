@@ -29,7 +29,10 @@ public abstract class Player {
 	}
 
 	public static interface OutputWriter {
-		void writeLine(String line);
+
+		void info(String line);
+
+		void debug(String line);
 	}
 
 	public void setOutputWriter(OutputWriter stream) {

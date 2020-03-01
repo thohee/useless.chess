@@ -13,7 +13,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import org.junit.Test;
 
-import de.thohee.useless.chess.Game;
 import de.thohee.useless.chess.board.BoardPosition;
 import de.thohee.useless.chess.board.Coordinate;
 import de.thohee.useless.chess.board.Move;
@@ -117,11 +116,11 @@ public class GameTest {
 		try {
 			gameThread.start();
 			commandStream.sendCommand("uci");
-			assertTrue(answerStream.popLine().startsWith("id name"));
-			assertTrue(answerStream.popLine().startsWith("id author"));
-			assertTrue(answerStream.popLine().startsWith("uciok"));
+			assertTrue(getResponse(answerStream).startsWith("id name"));
+			assertTrue(getResponse(answerStream).startsWith("id author"));
+			assertTrue(getResponse(answerStream).startsWith("uciok"));
 			commandStream.sendCommand("isready");
-			assertTrue(answerStream.popLine().startsWith("readyok"));
+			assertTrue(getResponse(answerStream).startsWith("readyok"));
 			BoardPosition boardPosition = BoardPosition.getInitialPosition();
 			boardPosition = boardPosition
 					.performMove(boardPosition.getMove(Coordinate.parse("e2"), Coordinate.parse("e4")));

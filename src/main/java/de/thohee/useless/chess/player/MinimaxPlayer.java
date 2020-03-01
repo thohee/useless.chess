@@ -1,5 +1,7 @@
 package de.thohee.useless.chess.player;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -26,8 +28,6 @@ public abstract class MinimaxPlayer extends Player {
 
 	private Long maxMillis = null;
 	private Long starttime = null;
-
-	private boolean infinite = false;
 
 	public MinimaxPlayer(Colour colour) {
 		super(colour);
@@ -78,9 +78,24 @@ public abstract class MinimaxPlayer extends Player {
 
 	}
 
-	// sorted by descending value
-	private TreeSet<GameState> choices = new TreeSet<>(
-			(gameState1, gameState2) -> gameState2.getValue().compareTo(gameState1.getValue()));
+	private TreeSet<GameState> choices = new TreeSet<>(new Comparator<GameState>() {
+		@Override
+		public int compare(GameState gameState1, GameState gameState2) {
+			// sorted by descending value
+			int cmp = gameState2.getValue().compareTo(gameState1.getValue());
+			if (cmp == 0) {
+				cmp = gameState1.getBoardPosition().hashCode() - gameState2.getBoardPosition().hashCode();
+				if (cmp == 0) {
+					if (gameState1.getBoardPosition().equals(gameState2.getBoardPosition())) {
+						return 0;
+					} else {
+						return System.identityHashCode(gameState1) - System.identityHashCode(gameState2);
+					}
+				}
+			}
+			return cmp;
+		}
+	});
 
 	protected class InterruptedException extends Exception {
 		private static final long serialVersionUID = 11135510449244745L;
@@ -88,7 +103,7 @@ public abstract class MinimaxPlayer extends Player {
 
 	private void writeLine(String line) {
 		if (outputWriter != null) {
-			outputWriter.writeLine(line);
+			outputWriter.debug(line);
 		}
 	}
 
@@ -103,7 +118,7 @@ public abstract class MinimaxPlayer extends Player {
 		}
 		if (maxMillis != null && starttime != null) {
 			long elapsedTime = System.currentTimeMillis() - starttime;
-			if (elapsedTime >= maxMillis - 20) {
+			if (elapsedTime >= maxMillis - 50) {
 				writeLine("break after " + Long.toString(elapsedTime) + "ms");
 				throw new InterruptedException();
 			}
@@ -115,36 +130,45 @@ public abstract class MinimaxPlayer extends Player {
 		this.stop.set(false);
 		this.maxDepth = null;
 		this.maxMillis = null;
-		this.infinite = false;
 		this.starttime = System.currentTimeMillis();
 		assert (boardPosition.getColourToMove().equals(this.colour) && !boardPosition.getPossibleMoves().isEmpty());
 		this.maxDepth = params.maxDepthInPlies;
 		this.maxMillis = params.maxTimeInMillis;
-		this.infinite = params.infinite;
+		if (params.infinite) {
+			assert (params.maxDepthInPlies == null);
+			assert (params.maxTimeInMillis == null);
+			this.maxDepth = null;
+			this.maxMillis = null;
+		}
 		if (transpositionTable != null) {
 			transpositionTable.clear();
 		}
 		choices.clear();
+		List<GameState> evaluatedChoices = null;
 		GameState root = new GameState(boardPosition);
-		boolean interrupted = false;
 		try {
-			maxValue(root, getMin(), getMax());
-		} catch (InterruptedException e) {
-			interrupted = true;
-		}
-		if (infinite) {
-			while (!stop.get()) {
-				try {
-					Thread.sleep(100);
-				} catch (java.lang.InterruptedException e) {
-					continue;
+			if (this.maxDepth != null) {
+				maxValue(root, getMin(), getMax());
+			} else {
+				this.maxDepth = 3;
+				while (true) {
+					writeLine("maxDepth = " + maxDepth);
+					maxValue(root, getMin(), getMax());
+					evaluatedChoices = new ArrayList<>(choices);
+					choices.clear();
+					if (transpositionTable != null) {
+						transpositionTable.clear();
+					}
+					maxDepth += 2;
 				}
 			}
+		} catch (InterruptedException e) {
 		}
-		if (!choices.isEmpty()) {
-			if (interrupted) {
-				writeLine("returning best choice");
-			}
+		if (evaluatedChoices != null && !evaluatedChoices.isEmpty()) {
+			writeLine("returning best choice of previous max depth");
+			return evaluatedChoices.get(0).getBoardPosition().getLastMove();
+		} else if (!choices.isEmpty()) {
+			writeLine("returning best choice of current max depth");
 			return choices.iterator().next().getBoardPosition().getLastMove();
 		} else {
 			writeLine("returning first possible move");
