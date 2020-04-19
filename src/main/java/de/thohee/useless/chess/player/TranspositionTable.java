@@ -1,24 +1,28 @@
 package de.thohee.useless.chess.player;
 
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.Map;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import de.thohee.useless.chess.board.BoardPosition;
 
 public class TranspositionTable {
 
-	private static final int MAX_SIZE = 10000;
+	private static final int MAX_SIZE = 5000;
 
-	private long counter = 0L;
+	private long cacheHits = 0L;
+	private long cacheMisses = 0L;
 
-	private HashMap<BoardPosition, Value> hashMap = new HashMap<>();
-	private List<BoardPosition> fifoQueue = new LinkedList<>();
+	private Map<BoardPosition, Value> hashMap = new ConcurrentHashMap<BoardPosition, Value>();
+	private Queue<BoardPosition> fifoQueue = new ConcurrentLinkedQueue<>();
 
 	public Value get(BoardPosition boardPosition) {
 		Value value = hashMap.get(boardPosition);
 		if (value != null) {
-			++counter;
+			++cacheHits;
+		} else {
+			++cacheMisses;
 		}
 		return value;
 	}
@@ -27,18 +31,22 @@ public class TranspositionTable {
 		hashMap.put(boardPosition, value);
 		fifoQueue.add(boardPosition);
 		while (fifoQueue.size() > MAX_SIZE) {
-			hashMap.remove(fifoQueue.remove(0));
+			hashMap.remove(fifoQueue.poll());
 		}
 	}
 
 	public void clear() {
 		hashMap.clear();
 		fifoQueue.clear();
-		counter = 0L;
+		cacheHits = 0L;
 	}
 
-	public long getCounter() {
-		return counter;
+	public long getCacheHits() {
+		return cacheHits;
+	}
+
+	public long getCacheMisses() {
+		return cacheMisses;
 	}
 
 }

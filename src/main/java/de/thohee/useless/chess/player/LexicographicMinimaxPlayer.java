@@ -13,19 +13,21 @@ import de.thohee.useless.chess.board.Colour;
 import de.thohee.useless.chess.board.Coordinate;
 import de.thohee.useless.chess.board.Figure;
 import de.thohee.useless.chess.board.Move;
-import de.thohee.useless.chess.board.Piece;
 import de.thohee.useless.chess.board.Move.Capture;
+import de.thohee.useless.chess.board.Piece;
 
 public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 
-	public LexicographicMinimaxPlayer(Colour colour) {
-		super(colour);
+	public LexicographicMinimaxPlayer(Colour colour, boolean useTranspositionTable) {
+		super(colour, useTranspositionTable);
 	}
 
 	private static class ValueVector extends ArrayList<Integer> implements Value {
 		private static final long serialVersionUID = 5403861563080301920L;
 
 		public static final int SIZE = 5;
+
+		private boolean invalid = false;
 
 		public ValueVector(int v) {
 			for (int i = 0; i < SIZE; ++i) {
@@ -34,6 +36,10 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 		}
 
 		public ValueVector() {
+		}
+
+		public ValueVector(boolean invalid) {
+			this.invalid = invalid;
 		}
 
 		@Override
@@ -48,11 +54,18 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 			}
 			return 0;
 		}
+
+		@Override
+		public boolean isInvalid() {
+			return this.invalid;
+		}
 	}
 
 	private static Value MINIMUM = new ValueVector(Integer.MIN_VALUE);
 
 	private static Value MAXIMUM = new ValueVector(Integer.MAX_VALUE);
+
+	private static Value INVALID = new ValueVector(true);
 
 	private BoardPosition lastThreatAnalysisBoardPosition = null;
 	private int lastThreatAnalysisValue = 0;
@@ -71,7 +84,7 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 
 	@Override
 	protected boolean isQuiescent(BoardPosition boardPosition) {
-		return !boardPosition.getPossibleMoves().stream().anyMatch(m -> m.getNewPiece() != null)
+		return !boardPosition.getAllPossibleMoves().stream().anyMatch(m -> m.getNewPiece() != null)
 				&& evaluateThreatsAndProtections(boardPosition) == 0;
 	}
 
@@ -190,6 +203,11 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 	}
 
 	@Override
+	protected Value getInvalid() {
+		return INVALID;
+	}
+
+	@Override
 	protected Value getMin() {
 		return MINIMUM;
 	}
@@ -231,8 +249,9 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 	protected List<Move> getPossibleMoves(BoardPosition boardPosition) {
 		// we do not exclude any moves but prioritize them
 		// looking at capture moves with high figure value first seems to improve the effect of alpha-beta-pruning
-		ArrayList<Move> sortedMoves = new ArrayList<>(boardPosition.getPossibleMoves());
+		ArrayList<Move> sortedMoves = new ArrayList<>(boardPosition.getAllPossibleMoves());
 		Collections.sort(sortedMoves, new MoveComparator(boardPosition));
 		return sortedMoves;
 	}
+
 }

@@ -8,4 +8,5 @@ package de.thohee.useless.chess.player;
  */
 public interface Value extends Comparable<Value> {
 
+	boolean isInvalid();
 }

@@ -19,14 +19,6 @@ import java.util.stream.Collectors;
 
 import org.junit.Test;
 
-import de.thohee.useless.chess.board.BoardPosition;
-import de.thohee.useless.chess.board.Colour;
-import de.thohee.useless.chess.board.Coordinate;
-import de.thohee.useless.chess.board.Figure;
-import de.thohee.useless.chess.board.GameReport;
-import de.thohee.useless.chess.board.Move;
-import de.thohee.useless.chess.board.PGNParser;
-import de.thohee.useless.chess.board.Piece;
 import de.thohee.useless.chess.board.Move.Capture;
 import de.thohee.useless.chess.board.Move.Castling;
 import de.thohee.useless.chess.board.Move.IllegalMoveFormatException;
@@ -67,6 +59,11 @@ public class BoardPositionTest {
 		}
 	}
 
+	private List<Move> getPossibleMoves(BoardPosition boardPosition, Coordinate coordinate) {
+		return boardPosition.getPossibleMoves().stream().filter(m -> coordinate.equals(m.getFrom()))
+				.collect(Collectors.toList());
+	}
+
 	@Test
 	public void testGetPossibleMoves() throws IllegalMoveFormatException {
 		// left of c04 is off board
@@ -92,7 +89,7 @@ public class BoardPositionTest {
 					boardPositionWithPiece = boardPositionWithPiece.performMove(new Move(Colour.White, Figure.Pawn,
 							new Coordinate(3, 1), new Coordinate(3, 2), Capture.None));
 				}
-				Set<Move> actualMoves = new HashSet<>(boardPositionWithPiece.getPossibleMoves(c04));
+				Set<Move> actualMoves = new HashSet<>(getPossibleMoves(boardPositionWithPiece, c04));
 				Set<Move> expectedMoves = new HashSet<>();
 				switch (figure) {
 				case Pawn:
@@ -159,14 +156,14 @@ public class BoardPositionTest {
 				Set<Move> expectedMoves = new HashSet<>();
 				expectedMoves.add(new Move(colour, Figure.Pawn, startPosition,
 						new Coordinate(column, nextRow + direction), Capture.None));
-				assertEquals(expectedMoves, new HashSet<Move>(boardPosition.getPossibleMoves(startPosition)));
+				assertEquals(expectedMoves, new HashSet<Move>(getPossibleMoves(boardPosition, startPosition)));
 				// regular captures
 				for (int dc : Arrays.asList(-1, 1)) {
 					Coordinate captureTarget = new Coordinate(column + dc, nextRow + direction);
 					boardPosition.set(captureTarget, otherPawn);
 					expectedMoves.add(new Move(colour, Figure.Pawn, startPosition, captureTarget, Capture.Regular));
 				}
-				assertEquals(expectedMoves, new HashSet<Move>(boardPosition.getPossibleMoves(startPosition)));
+				assertEquals(expectedMoves, new HashSet<Move>(getPossibleMoves(boardPosition, startPosition)));
 			}
 
 			// one or two steps
@@ -182,7 +179,7 @@ public class BoardPositionTest {
 						new Coordinate(column, initialRow + direction), Capture.None));
 				expectedMoves.add(new Move(colour, Figure.Pawn, startPosition,
 						new Coordinate(column, initialRow + 2 * direction), Capture.None));
-				assertEquals(expectedMoves, new HashSet<Move>(boardPosition.getPossibleMoves(startPosition)));
+				assertEquals(expectedMoves, new HashSet<Move>(getPossibleMoves(boardPosition, startPosition)));
 			}
 
 			// capture en passant
@@ -204,7 +201,7 @@ public class BoardPositionTest {
 				boardPosition.set(otherStartPosition, otherPawn);
 				boardPosition.setLastMove(new MoveMock(lastMove.getColour().opposite()));
 				boardPosition = boardPosition.performMove(passingMove); // is at the same time the last move
-				assertEquals(expectedMoves, new HashSet<Move>(boardPosition.getPossibleMoves(startPosition)));
+				assertEquals(expectedMoves, new HashSet<Move>(getPossibleMoves(boardPosition, startPosition)));
 			}
 
 			// promotion
@@ -222,7 +219,7 @@ public class BoardPositionTest {
 				expectedMoves.add(
 						new Move(colour, Figure.Pawn, startPosition, new Coordinate(column, beforeLastRow + direction),
 								Capture.None, new Piece(pawn.getColour(), Figure.Knight)));
-				assertEquals(expectedMoves, new HashSet<Move>(boardPosition.getPossibleMoves(startPosition)));
+				assertEquals(expectedMoves, new HashSet<Move>(getPossibleMoves(boardPosition, startPosition)));
 			}
 
 			// do not set yourself in chess
@@ -469,17 +466,21 @@ public class BoardPositionTest {
 	public void testIsStalemate() throws IllegalMoveFormatException {
 		BoardPosition boardPosition = new BoardPosition();
 		boardPosition.set(Coordinate.parse("a1"), new Piece(Colour.White, Figure.King));
-		assertFalse(boardPosition.isStalemate());
+		boardPosition.analyze();
+		assertFalse(boardPosition.stalemate());
 		boardPosition.set(Coordinate.parse("b3"), new Piece(Colour.Black, Figure.Queen));
-		assertTrue(boardPosition.isStalemate());
+		boardPosition.analyze();
+		assertTrue(boardPosition.stalemate());
 
 		boardPosition = new BoardPosition();
 		boardPosition.set(Coordinate.parse("e8"), new Piece(Colour.Black, Figure.King));
 		boardPosition.set(Coordinate.parse("d6"), new Piece(Colour.White, Figure.Queen));
 		boardPosition.setLastMove(Move.parse(Colour.White, "Qd1-d6"));
-		assertFalse(boardPosition.isStalemate());
+		boardPosition.analyze();
+		assertFalse(boardPosition.stalemate());
 		boardPosition.set(Coordinate.parse("h7"), new Piece(Colour.White, Figure.Rook));
-		assertTrue(boardPosition.isStalemate());
+		boardPosition.analyze();
+		assertTrue(boardPosition.stalemate());
 	}
 
 	@Test

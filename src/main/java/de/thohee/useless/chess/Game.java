@@ -97,9 +97,8 @@ public class Game implements Player.OutputWriter {
 				;
 			scanner.close();
 		} else {
-			println(_info + "I only understand uci.");
+			println("I only understand uci.");
 		}
-		println(_info + "Goodbye");
 	}
 
 	private boolean processCommand(String inputLine) {
@@ -120,7 +119,7 @@ public class Game implements Player.OutputWriter {
 							performMove(moveToken);
 						}
 					}
-					this.player = new LexicographicMinimaxPlayer(boardPosition.getColourToMove());
+					this.player = new LexicographicMinimaxPlayer(boardPosition.getColourToMove(), true);
 					this.player.setOutputWriter(this);
 					return true;
 				} else {
@@ -191,8 +190,14 @@ public class Game implements Player.OutputWriter {
 		playerThread = new Thread(new Runnable() {
 			@Override
 			public void run() {
-				Move move = player.makeMove(boardPosition, params);
-				println(_bestmove + move.asUciMove());
+				try {
+					Move move = player.makeMove(boardPosition, params);
+					println(_bestmove + move.asUciMove());
+				} catch (Throwable e) {
+					println(_info + e.getClass().getSimpleName()
+							+ (e.getMessage() != null ? ": " + e.getMessage() : ""));
+					println(_bestmove + boardPosition.getPossibleMoves().get(0).asUciMove());
+				}
 			}
 		});
 		playerThread.start();

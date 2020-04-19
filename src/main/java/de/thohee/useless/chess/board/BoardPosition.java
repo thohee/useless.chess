@@ -29,6 +29,7 @@ public class BoardPosition {
 	private long depth = 0;
 
 	// cached computation results
+	private List<Move> allPossibleMoves = null;
 	private List<Move> possibleMoves = null;
 	private Map<Colour, Map<Coordinate, Set<Piece>>> threatsTo = null;
 	private Map<Coordinate, Set<Piece>> protections = null;
@@ -130,7 +131,7 @@ public class BoardPosition {
 		return justPerformMove(move);
 	}
 
-	private BoardPosition justPerformMove(Move move) {
+	public BoardPosition justPerformMove(Move move) {
 		assert (move != null && move.getColour().equals(getColourToMove()));
 		BoardPosition newBoardPosition = new BoardPosition(this);
 		boolean moveWithoutPawnAndCapture = true;
@@ -414,7 +415,7 @@ public class BoardPosition {
 	}
 
 	public Set<Piece> getProtections(Coordinate coordinate) {
-		analyze();
+		analyze0();
 		return protections(coordinate);
 	}
 
@@ -424,21 +425,16 @@ public class BoardPosition {
 	}
 
 	public boolean isCheck() {
-		analyze();
-		return check();
-	}
-
-	private boolean check() {
-		Colour colourToMove = getColourToMove();
-		return checkTo(colourToMove);
+		analyze0();
+		return checkTo(getColourToMove());
 	}
 
 	private boolean checkTo(Colour colour) {
 		return !threatsTo(colour, kingPosition.get(colour)).isEmpty();
 	}
 
-	private boolean isStillCheck() {
-		analyze(false);
+	public boolean isStillCheck() {
+		analyze0();
 		return checkTo(getColourToMove().opposite());
 	}
 
@@ -448,9 +444,8 @@ public class BoardPosition {
 	}
 
 	// Patt
-	public boolean isStalemate() {
-		analyze();
-		return possibleMoves.isEmpty() && !isCheck();
+	boolean stalemate() {
+		return possibleMoves.isEmpty() && !checkTo(getColourToMove());
 	}
 
 	// Remis
@@ -472,7 +467,7 @@ public class BoardPosition {
 		}
 
 		// stalemate
-		if (isStalemate()) {
+		if (stalemate()) {
 			return true;
 		}
 
@@ -488,12 +483,8 @@ public class BoardPosition {
 		return lastMove != null ? lastMove.getColour().opposite() : Colour.White;
 	}
 
-	private void analyze() {
-		analyze(true);
-	}
-
-	private void analyze(boolean checkCheck) {
-		if (possibleMoves != null) {
+	private void analyze0() {
+		if (allPossibleMoves != null) {
 			return;
 		}
 		threatsTo = new HashMap<>();
@@ -516,27 +507,45 @@ public class BoardPosition {
 				}
 			}
 			if (colour.equals(colourToMove)) {
-				if (!check()) {
+				if (!checkTo(colour)) {
 					moves.addAll(getPossibleCastlings(colourToMove));
 				}
-				if (checkCheck) {
-					// only those moves are allowed which do not leave the king in check
-					possibleMoves = moves.stream().filter(m -> !justPerformMove(m).isStillCheck())
-							.collect(Collectors.toList());
-				} else {
-					possibleMoves = new ArrayList<>(moves);
-				}
+				allPossibleMoves = new ArrayList<>(moves);
 			}
 		}
+	}
+
+	void analyze() {
+		analyze0();
+		if (possibleMoves != null) {
+			return;
+		}
+		// only those moves are allowed which do not leave the king in check
+		possibleMoves = allPossibleMoves.stream().filter(m -> !justPerformMove(m).isStillCheck())
+				.collect(Collectors.toList());
 		this.draw = draw();
 	}
 
+	/**
+	 * @return all allowed moves, which particularly excludes moves, after which
+	 *         the king of the moving color is (still) in check. This requires
+	 *         analyzing the resulting positions as well.
+	 */
 	public List<Move> getPossibleMoves() {
 		analyze();
 		if (isCheckmate() || isDraw()) {
 			return Collections.emptyList();
 		}
 		return possibleMoves;
+	}
+
+	/**
+	 * @return all possible moves including those after which the king of the
+	 *         moving color is (still) in check, which is actually not allowed.
+	 */
+	public List<Move> getAllPossibleMoves() {
+		analyze0();
+		return allPossibleMoves;
 	}
 
 	private Stack<Move> performedMoves() {
@@ -700,6 +709,7 @@ public class BoardPosition {
 	// unit test methods
 
 	private void resetCachedValues() {
+		this.allPossibleMoves = null;
 		this.possibleMoves = null;
 	}
 
@@ -716,11 +726,6 @@ public class BoardPosition {
 	void setLastMove(Move move) {
 		this.lastMove = move;
 		resetCachedValues();
-	}
-
-	List<Move> getPossibleMoves(Coordinate coordinate) {
-		analyze();
-		return possibleMoves.stream().filter(m -> coordinate.equals(m.getFrom())).collect(Collectors.toList());
 	}
 
 }

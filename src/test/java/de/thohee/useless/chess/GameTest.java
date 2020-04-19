@@ -162,4 +162,39 @@ public class GameTest {
 		}
 	}
 
+	@Test
+	public void testAvoidInvalidChoice() throws InterruptedException {
+
+		CommandStream commandStream = new CommandStream();
+		AnswerStream answerStream = new AnswerStream();
+
+		Game game = new Game(commandStream, new PrintStream(answerStream));
+
+		Thread gameThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				game.playUciGame();
+			}
+		});
+
+		try {
+			gameThread.start();
+			commandStream.sendCommand("uci");
+			assertTrue(getResponse(answerStream).startsWith("id name"));
+			assertTrue(getResponse(answerStream).startsWith("id author"));
+			assertTrue(getResponse(answerStream).startsWith("uciok"));
+			commandStream.sendCommand("isready");
+			assertTrue(getResponse(answerStream).startsWith("readyok"));
+			commandStream.sendCommand(
+					"position startpos moves e2e3 d7d6 f1e2 e7e5 d2d4 e5e4 f2f3 d8h4 g2g3 h4e7 f3e4 e7e4 e2f3 e4f5 e3e4 f5b5 d4d5 f7f6 b1d2 b7b6 c2c4 b5b4 b2b3 g7g5 g1e2 b8d7 e1g1 d7e5 e2d4 e5g6 f3h5");
+			commandStream.sendCommand("go depth 4");
+
+			assertTrue(getResponse(answerStream).startsWith("bestmove"));
+
+		} finally {
+			commandStream.sendCommand("quit");
+			gameThread.join();
+		}
+
+	}
 }

@@ -12,9 +12,6 @@ import org.junit.Test;
 import de.thohee.useless.chess.board.BoardPosition;
 import de.thohee.useless.chess.board.Colour;
 import de.thohee.useless.chess.board.Move;
-import de.thohee.useless.chess.player.LexicographicMinimaxPlayer;
-import de.thohee.useless.chess.player.Player;
-import de.thohee.useless.chess.player.RandomPlayer;
 
 public class MinimaxPlayerTest {
 
@@ -33,8 +30,7 @@ public class MinimaxPlayerTest {
 			for (int seed : Arrays.asList(13, 47, 71)) {
 
 				Player opponent = new RandomPlayer(ownColour.opposite(), seed);
-				LexicographicMinimaxPlayer self = new LexicographicMinimaxPlayer(ownColour);
-				self.setUseTranspositionTable();
+				LexicographicMinimaxPlayer self = new LexicographicMinimaxPlayer(ownColour, true);
 
 				Map<Colour, Player> players = new HashMap<>();
 				players.put(opponent.getColour(), opponent);
