@@ -13,8 +13,8 @@
     * average branching factor
     * actually visited nodes
     * number of times of alpha/beta pruning
-* effizientere Datenstruktur(en) für die BoardPosition: array statt hashmap, cached hash
-* do not use complete BoardPosition as key for transposition table but only memory efficient array and a boolean indicating draw criteria repetitions or pawn moves have been reached
+* efficient data structure for actual board position: array of length 64 instead of hashmap, cached hash
+* do not use complete BoardPosition as key for transposition table but only memory efficient array, the set of castling pieces, and a boolean indicating whether draw criteria repetitions or pawn moves has been reached
 * increase transposition table size
 * use flame graphs for profiling
 * heap analysis, save memory

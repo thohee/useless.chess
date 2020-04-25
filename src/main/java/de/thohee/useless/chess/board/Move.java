@@ -84,7 +84,7 @@ public class Move {
 		result = prime * result + ((colour == null) ? 0 : colour.hashCode());
 		result = prime * result + ((figure == null) ? 0 : figure.hashCode());
 		result = prime * result + ((from == null) ? 0 : from.hashCode());
-		result = prime * result + ((newPiece == null) ? 0 : newPiece.hashCode());
+		result = prime * result + ((newPiece == null) ? 0 : newPiece.getFigure().ordinal());
 		result = prime * result + ((to == null) ? 0 : to.hashCode());
 		return result;
 	}
@@ -112,10 +112,14 @@ public class Move {
 		} else if (!from.equals(other.from))
 			return false;
 		if (newPiece == null) {
-			if (other.newPiece != null)
+			if (other.newPiece != null) {
 				return false;
-		} else if (!newPiece.equals(other.newPiece))
+			}
+		} else if (!newPiece.getFigure().equals(other.newPiece.getFigure())) {
 			return false;
+		} else if (!newPiece.getColour().equals(other.newPiece.getColour())) {
+			return false;
+		}
 		if (to == null) {
 			if (other.to != null)
 				return false;

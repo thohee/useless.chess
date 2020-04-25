@@ -29,27 +29,34 @@ public class BoardPositionTest {
 	public void testGetPossibleCastlings() {
 
 		// no castlings possible in initial position
-		assertTrue(BoardPosition.getInitialPosition().getPossibleCastlings(Colour.White).isEmpty());
-		assertTrue(BoardPosition.getInitialPosition().getPossibleCastlings(Colour.Black).isEmpty());
+		BoardPosition initialPosition = BoardPosition.getInitialPosition();
+		initialPosition.analyze();
+		assertTrue(initialPosition.getPossibleCastlings(Colour.White).isEmpty());
+		assertTrue(initialPosition.getPossibleCastlings(Colour.Black).isEmpty());
 
 		BoardPosition boardPosition = new BoardPosition();
 		boardPosition.set(new Coordinate(4, 0), new Piece(Colour.White, Figure.King));
 		boardPosition.addCastlingPiece(boardPosition.get(new Coordinate(4, 0)));
 		// rook is missing
+		boardPosition.analyze();
 		assertTrue(boardPosition.getPossibleCastlings(Colour.White).isEmpty());
 		boardPosition.set(new Coordinate(7, 0), new Piece(Colour.White, Figure.Rook));
 		// rook is not registered as castling piece
+		boardPosition.analyze();
 		assertTrue(boardPosition.getPossibleCastlings(Colour.White).isEmpty());
 		boardPosition.addCastlingPiece(boardPosition.get(new Coordinate(7, 0)));
 		// king side castling
+		boardPosition.analyze();
 		assertEquals(Collections.singletonList(new Move(Colour.White, Castling.KingSide)),
 				boardPosition.getPossibleCastlings(Colour.White));
 		boardPosition.set(new Coordinate(5, 0), new Piece(Colour.White, Figure.Bishop));
 		// blocked by bishop
+		boardPosition.analyze();
 		assertTrue(boardPosition.getPossibleCastlings(Colour.White).isEmpty());
 		boardPosition.set(new Coordinate(0, 0), new Piece(Colour.White, Figure.Knight));
 		boardPosition.addCastlingPiece(boardPosition.get(new Coordinate(0, 0)));
 		// queen side castling with knight is not possible
+		boardPosition.analyze();
 		assertTrue(boardPosition.getPossibleCastlings(Colour.White).isEmpty());
 	}
 
@@ -71,6 +78,7 @@ public class BoardPositionTest {
 			boardPosition.set(new Coordinate(7, row), kingSideRook);
 			boardPosition.addCastlingPiece(kingSideRook);
 
+			boardPosition.analyze();
 			List<Move> possibleCastlings = boardPosition.getPossibleCastlings(colour);
 			assertEquals(2, possibleCastlings.size());
 			assertTrue(possibleCastlings.contains(new Move(colour, Castling.KingSide)));
@@ -78,12 +86,31 @@ public class BoardPositionTest {
 
 			boardPosition = boardPosition.performMove(new Move(colour, Figure.Rook, new Coordinate(0, row),
 					new Coordinate(0, (row + 2) % 7), Capture.None));
+			boardPosition.analyze();
 			possibleCastlings = boardPosition.getPossibleCastlings(colour);
 			assertEquals(1, possibleCastlings.size());
 			assertTrue(possibleCastlings.contains(new Move(colour, Castling.KingSide)));
 
 		}
 
+	}
+
+	@Test
+	public void testGetPossibleCastlingsThroughChess() {
+		final int row = 0;
+		final Colour colour = Colour.White;
+		BoardPosition boardPosition = new BoardPosition();
+		Piece king = new Piece(colour, Figure.King);
+		boardPosition.set(new Coordinate(4, row), king);
+		boardPosition.addCastlingPiece(king);
+		Piece queenSideRook = new Piece(colour, Figure.Rook);
+		boardPosition.set(new Coordinate(0, row), queenSideRook);
+		boardPosition.addCastlingPiece(queenSideRook);
+		// the black queen threatens the position, which the king would have to pass
+		boardPosition.set(new Coordinate(3, 4), new Piece(colour.opposite(), Figure.Queen));
+		boardPosition.analyze();
+		List<Move> possibleCastlings = boardPosition.getPossibleCastlings(colour);
+		assertTrue(possibleCastlings.isEmpty());
 	}
 
 	private class MoveMock extends Move {
@@ -473,6 +500,7 @@ public class BoardPositionTest {
 	@Test
 	public void testGetInitialPosition() throws IllegalMoveFormatException {
 		BoardPosition initialPosition = BoardPosition.getInitialPosition();
+		initialPosition.analyze();
 		assertTrue(initialPosition.getPossibleCastlings(Colour.White).isEmpty());
 		assertEquals(expectedInitiallyPossibleMoves(Colour.White), new HashSet<>(initialPosition.getPossibleMoves()));
 		BoardPosition boardPosition = initialPosition.performMove(Move.parse(Colour.White, "a2-a3"));

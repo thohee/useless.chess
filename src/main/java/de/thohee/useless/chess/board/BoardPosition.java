@@ -228,6 +228,15 @@ public class BoardPosition {
 		return true;
 	}
 
+	private boolean threatsToAny(Colour colour, int row, List<Integer> columns) {
+		for (int c : columns) {
+			if (!threatsTo(colour, new Coordinate(c, row)).isEmpty()) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	List<Move> getPossibleCastlings(Colour colour) {
 		if (castlingPieces.isEmpty()) {
 			return Collections.emptyList();
@@ -239,11 +248,13 @@ public class BoardPosition {
 		List<Move> possibleCastlings = new LinkedList<>();
 		if (king != null && king.getFigure().equals(Figure.King) && castlingPieces.contains(king)) {
 			if (kingSideRook != null && kingSideRook.getFigure().equals(Figure.Rook)
-					&& allEmpty(row, Arrays.asList(5, 6)) && castlingPieces.contains(kingSideRook)) {
+					&& castlingPieces.contains(kingSideRook) && allEmpty(row, Arrays.asList(5, 6))
+					&& !threatsToAny(colour, row, Arrays.asList(4, 5, 6))) {
 				possibleCastlings.add(new Move(colour, Castling.KingSide));
 			}
 			if (queenSideRook != null && queenSideRook.getFigure().equals(Figure.Rook)
-					&& allEmpty(row, Arrays.asList(1, 2, 3)) && castlingPieces.contains(queenSideRook)) {
+					&& castlingPieces.contains(queenSideRook) && allEmpty(row, Arrays.asList(1, 2, 3))
+					&& !threatsToAny(colour, row, Arrays.asList(2, 3, 4))) {
 				possibleCastlings.add(new Move(colour, Castling.QueenSide));
 			}
 		}
@@ -276,7 +287,7 @@ public class BoardPosition {
 	private static final Direction[] bishopDirections = { new Direction(-1, -1), new Direction(1, -1),
 			new Direction(-1, 1), new Direction(1, 1) };
 
-	private static final Figure[] promotionFigures = { Figure.Queen, Figure.Knight };
+	private static final Figure[] promotionFigures = { Figure.Queen, Figure.Knight, Figure.Bishop, Figure.Rook };
 
 	private void goAsFarAsPossible(final Piece piece, final Coordinate startPosition, final Direction[] directions,
 			final int maxOffset, List<Move> moves) {
@@ -527,9 +538,9 @@ public class BoardPosition {
 	}
 
 	/**
-	 * @return all allowed moves, which particularly excludes moves, after which
-	 *         the king of the moving color is (still) in check. This requires
-	 *         analyzing the resulting positions as well.
+	 * @return all allowed moves, which particularly excludes moves, after which the
+	 *         king of the moving color is (still) in check. This requires analyzing
+	 *         the resulting positions as well.
 	 */
 	public List<Move> getPossibleMoves() {
 		analyze();
@@ -540,8 +551,8 @@ public class BoardPosition {
 	}
 
 	/**
-	 * @return all possible moves including those after which the king of the
-	 *         moving color is (still) in check, which is actually not allowed.
+	 * @return all possible moves including those after which the king of the moving
+	 *         color is (still) in check, which is actually not allowed.
 	 */
 	public List<Move> getAllPossibleMoves() {
 		analyze0();
@@ -614,12 +625,18 @@ public class BoardPosition {
 	}
 
 	public Move getMove(Coordinate from, Coordinate to) {
+		return getMove(from, to, null);
+	}
+
+	public Move getMove(Coordinate from, Coordinate to, Figure newFigure) {
 		Piece piece = map.get(from);
 		assert (piece != null);
 		assert (piece.getColour().equals(getColourToMove()));
 		Capture capture = map.get(to) != null ? Capture.Regular : Capture.None;
-		if (piece.getFigure().equals(Figure.Pawn) && ((piece.getColour().equals(Colour.White) && to.getRow() == 5)
-				|| (piece.getColour().equals(Colour.Black) && to.getRow() == 2))) {
+		if (piece.getFigure().equals(Figure.Pawn) && to.getRow() == (piece.getColour().equals(Colour.White) ? 5 : 2)
+				&& map.get(to) == null && lastMove.getFigure().equals(Figure.Pawn)
+				&& lastMove.getTo().getColumn() == to.getColumn()
+				&& lastMove.getTo().getRow() == (to.getRow() + (piece.getColour().equals(Colour.White) ? -1 : 1))) {
 			capture = Capture.EnPassant;
 		}
 		Move move = null;
@@ -631,7 +648,8 @@ public class BoardPosition {
 			move = new Move(getColourToMove(), castling);
 		} else {
 			if (piece.getFigure().equals(Figure.Pawn) && Arrays.asList(0, 7).contains(to.getRow())) {
-				Piece newPiece = new Piece(piece.getColour(), Figure.Queen);
+				assert (newFigure != null);
+				Piece newPiece = new Piece(piece.getColour(), newFigure);
 				move = new Move(getColourToMove(), piece.getFigure(), from, to, capture, newPiece);
 			} else {
 				move = new Move(getColourToMove(), piece.getFigure(), from, to, capture);

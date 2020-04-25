@@ -8,6 +8,7 @@ import java.util.Scanner;
 
 import de.thohee.useless.chess.board.BoardPosition;
 import de.thohee.useless.chess.board.Coordinate;
+import de.thohee.useless.chess.board.Figure;
 import de.thohee.useless.chess.board.Move;
 import de.thohee.useless.chess.player.LexicographicMinimaxPlayer;
 import de.thohee.useless.chess.player.Player;
@@ -172,11 +173,34 @@ public class Game implements Player.OutputWriter {
 		}
 	}
 
-	private void performMove(String moveToken) {
+	public static Move parseMove(BoardPosition boardPosition, String moveToken) throws Exception {
 		Coordinate from = Coordinate.parse(moveToken.substring(0, 2));
 		Coordinate to = Coordinate.parse(moveToken.substring(2, 4));
-		Move move = boardPosition.getMove(from, to);
-		boardPosition = boardPosition.performMove(move);
+		Figure newFigure = null;
+		if (moveToken.length() > 4) {
+			String newFigureLetter = moveToken.substring(4, 5);
+			switch (newFigureLetter) {
+			case "q":
+				newFigure = Figure.Queen;
+				break;
+			case "r":
+				newFigure = Figure.Rook;
+				break;
+			case "b":
+				newFigure = Figure.Bishop;
+				break;
+			case "n":
+				newFigure = Figure.Knight;
+				break;
+			default:
+				throw new Exception(newFigureLetter);
+			}
+		}
+		return boardPosition.getMove(from, to, newFigure);
+	}
+
+	private void performMove(String moveToken) throws Exception {
+		boardPosition = boardPosition.performMove(parseMove(boardPosition, moveToken));
 	}
 
 	private void findBestMoveConcurrently(Player.Params params) {
