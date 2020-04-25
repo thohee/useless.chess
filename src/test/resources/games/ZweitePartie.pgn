@@ -1,0 +1,21 @@
+[Event "Computer Schach Partie"]
+[Site "DESKTOP-IE1N39L"]
+[Date "2020.04.21"]
+[Round "?"]
+[White "Useless.chess-1.0-SNAPSHOT"]
+[Black "TestFlorin"]
+[Result "*"]
+[BlackElo "2200"]
+[ECO "C20"]
+[Opening "Offene Partie"]
+[Time "09:26:11"]
+[Variation "1.e4 e5"]
+[WhiteElo "2200"]
+[Termination "unterminated"]
+[PlyCount "21"]
+[WhiteType "program"]
+[BlackType "program"]
+
+1. e4 e5 2. g4 Nf6 3. f3 Bc5 4. Nh3 O-O 5. c3 d5 6. b4 Nxe4 7. fxe4 Qh4+ 8.
+Ke2 Bxg4+ 9. Kd3 Bxd1 10. Ng5 Qh3+ 11. Nxh3
+

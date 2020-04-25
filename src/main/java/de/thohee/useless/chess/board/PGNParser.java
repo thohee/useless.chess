@@ -62,17 +62,17 @@ public class PGNParser {
 					&& boardPosition.get(target) == null)) {
 				capture = Capture.EnPassant;
 			}
-			Piece newPiece = null;
+			Figure newFigure = null;
 			if (moveString.contains("=")) {
 				int i = moveString.indexOf("=");
-				Figure newFigure = Figure.parse(moveString.substring(i + 1, i + 2));
-				newPiece = new Piece(boardPosition.getColourToMove(), newFigure);
+				newFigure = Figure.parse(moveString.substring(i + 1, i + 2));
 			}
 			List<Move> possibleMoves = new LinkedList<>();
 			for (Move move : boardPosition.getPossibleMoves()) {
 				if (move.getCastling() == null && move.getFigure().equals(figure) && move.getCapture().equals(capture)
-						&& move.getTo().equals(target) && ((newPiece == null && move.getNewPiece() == null)
-								|| (newPiece != null && newPiece.equals(move.getNewPiece())))) {
+						&& move.getTo().equals(target)
+						&& ((newFigure == null && move.getNewPiece() == null) || (newFigure != null
+								&& move.getNewPiece() != null && newFigure.equals(move.getNewPiece().getFigure())))) {
 					possibleMoves.add(move);
 				}
 			}
@@ -149,6 +149,14 @@ public class PGNParser {
 					String token = moveScanner.next();
 					if (token.isEmpty()) {
 						continue;
+					} else if (token.startsWith("{")) {
+						while (!token.contains("}") && moveScanner.hasNext()) {
+							token = moveScanner.next();
+						}
+						if (!moveScanner.hasNext()) {
+							break;
+						}
+						token = moveScanner.next();
 					}
 					try {
 						Integer.parseInt(token);

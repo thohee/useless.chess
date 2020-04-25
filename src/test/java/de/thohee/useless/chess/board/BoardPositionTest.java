@@ -53,6 +53,39 @@ public class BoardPositionTest {
 		assertTrue(boardPosition.getPossibleCastlings(Colour.White).isEmpty());
 	}
 
+	@Test
+	public void testGetPosssibleKingSideCastlingAfterQueenSideRookMoved() {
+
+		for (Colour colour : Arrays.asList(Colour.White)) {
+
+			int row = colour.ordinal() * 7;
+
+			BoardPosition boardPosition = new BoardPosition();
+			Piece king = new Piece(colour, Figure.King);
+			boardPosition.set(new Coordinate(4, row), king);
+			boardPosition.addCastlingPiece(king);
+			Piece queenSideRook = new Piece(colour, Figure.Rook);
+			boardPosition.set(new Coordinate(0, row), queenSideRook);
+			boardPosition.addCastlingPiece(queenSideRook);
+			Piece kingSideRook = new Piece(colour, Figure.Rook);
+			boardPosition.set(new Coordinate(7, row), kingSideRook);
+			boardPosition.addCastlingPiece(kingSideRook);
+
+			List<Move> possibleCastlings = boardPosition.getPossibleCastlings(colour);
+			assertEquals(2, possibleCastlings.size());
+			assertTrue(possibleCastlings.contains(new Move(colour, Castling.KingSide)));
+			assertTrue(possibleCastlings.contains(new Move(colour, Castling.QueenSide)));
+
+			boardPosition = boardPosition.performMove(new Move(colour, Figure.Rook, new Coordinate(0, row),
+					new Coordinate(0, (row + 2) % 7), Capture.None));
+			possibleCastlings = boardPosition.getPossibleCastlings(colour);
+			assertEquals(1, possibleCastlings.size());
+			assertTrue(possibleCastlings.contains(new Move(colour, Castling.KingSide)));
+
+		}
+
+	}
+
 	private class MoveMock extends Move {
 		public MoveMock(Colour colour) {
 			super(colour, Castling.KingSide);
@@ -71,13 +104,17 @@ public class BoardPositionTest {
 		for (Colour colour : Colour.values()) {
 			BoardPosition boardPosition = new BoardPosition();
 			// top of c04 is blocked by own pieces
-			boardPosition.set(new Coordinate(0, 5), new Piece(colour, Figure.Pawn)); // blocks the rook, queen, king and white pawn
-			boardPosition.set(new Coordinate(1, 5), new Piece(colour, Figure.Pawn)); // blocks the bishop, queen and king
+			boardPosition.set(new Coordinate(0, 5), new Piece(colour, Figure.Pawn)); // blocks the rook, queen, king and
+																						// white pawn
+			boardPosition.set(new Coordinate(1, 5), new Piece(colour, Figure.Pawn)); // blocks the bishop, queen and
+																						// king
 			boardPosition.set(new Coordinate(1, 6), new Piece(colour, Figure.Pawn)); // blocks the knight
 			// below c04 is 'blocked' by opponent's pieces
 			Colour opposite = colour.opposite();
-			boardPosition.set(new Coordinate(0, 3), new Piece(opposite, Figure.Pawn)); // beaten by rook, queen, king and black pawn
-			boardPosition.set(new Coordinate(2, 2), new Piece(opposite, Figure.Pawn)); // beaten by bishop and queen, threatens black king
+			boardPosition.set(new Coordinate(0, 3), new Piece(opposite, Figure.Pawn)); // beaten by rook, queen, king
+																						// and black pawn
+			boardPosition.set(new Coordinate(2, 2), new Piece(opposite, Figure.Pawn)); // beaten by bishop and queen,
+																						// threatens black king
 			boardPosition.set(new Coordinate(1, 2), new Piece(opposite, Figure.Pawn)); // beaten by knight
 			for (Figure figure : Figure.values()) {
 				Piece piece = new Piece(colour, figure);
@@ -126,7 +163,7 @@ public class BoardPositionTest {
 					}
 					break;
 				}
-				//				traceMoves(expectedMoves, actualMoves);
+				// traceMoves(expectedMoves, actualMoves);
 				assertEquals(boardPositionWithPiece.getPositionedPieces().stream()
 						.map(e -> e.getKey().toString() + " " + e.getValue().toString())
 						.reduce((s1, s2) -> s1 + "," + s2).orElse(""), expectedMoves, actualMoves);
@@ -212,14 +249,19 @@ public class BoardPositionTest {
 				boardPosition.set(lastPosition, lastPiece);
 				boardPosition.setLastMove(new MoveMock(lastMove.getColour().opposite()));
 				boardPosition = boardPosition.performMove(lastMove);
-				Set<Move> expectedMoves = new HashSet<>();
-				expectedMoves.add(
-						new Move(colour, Figure.Pawn, startPosition, new Coordinate(column, beforeLastRow + direction),
-								Capture.None, new Piece(pawn.getColour(), Figure.Queen)));
-				expectedMoves.add(
-						new Move(colour, Figure.Pawn, startPosition, new Coordinate(column, beforeLastRow + direction),
-								Capture.None, new Piece(pawn.getColour(), Figure.Knight)));
-				assertEquals(expectedMoves, new HashSet<Move>(getPossibleMoves(boardPosition, startPosition)));
+				HashSet<Move> possibleMoves = new HashSet<Move>(getPossibleMoves(boardPosition, startPosition));
+				assertTrue(possibleMoves.size() >= 2);
+				Coordinate targetPosition = new Coordinate(column, beforeLastRow + direction);
+				List<Figure> promotionFigures = Arrays.asList(Figure.Queen, Figure.Knight, Figure.Bishop, Figure.Rook);
+				for (Move move : possibleMoves) {
+					assertEquals(colour, move.getColour());
+					assertEquals(Figure.Pawn, move.getFigure());
+					assertEquals(startPosition, move.getFrom());
+					assertEquals(targetPosition, move.getTo());
+					assertNotNull(move.getNewPiece());
+					assertEquals(colour, move.getNewPiece().getColour());
+					assertTrue(promotionFigures.contains(move.getNewPiece().getFigure()));
+				}
 			}
 
 			// do not set yourself in chess
@@ -338,8 +380,10 @@ public class BoardPositionTest {
 		preparedBoardPosition.addCastlingPiece(blackKing);
 		preparedBoardPosition.addCastlingPiece(blackRook1);
 		preparedBoardPosition.addCastlingPiece(blackRook2);
-		for (Castling castling : Castling.values()) {
-			for (Colour colour : Colour.values()) {
+		List<Piece> kings = Arrays.asList(whiteKing, blackKing);
+		List<Piece> rooks = Arrays.asList(whiteRook2, whiteRook1, blackRook2, blackRook1);
+		for (Castling castling : Castling.values()) { // 1. king side 2. queen side
+			for (Colour colour : Colour.values()) { // 1. white 2. black
 				BoardPosition boardPosition = preparedBoardPosition;
 				int row = colour.equals(Colour.White) ? 0 : 7;
 				int direction = castling.equals(Castling.KingSide) ? 1 : -1;
@@ -352,8 +396,9 @@ public class BoardPositionTest {
 				Move castlingMove = new Move(colour, castling);
 				boardPosition = boardPosition.performMove(castlingMove);
 				assertEquals(6, boardPosition.getPieces().size());
-				assertEquals(new Piece(colour, Figure.King), boardPosition.get(new Coordinate(4 + 2 * direction, row)));
-				assertEquals(new Piece(colour, Figure.Rook), boardPosition.get(new Coordinate(4 + direction, row)));
+				assertEquals(kings.get(colour.ordinal()), boardPosition.get(new Coordinate(4 + 2 * direction, row)));
+				assertEquals(rooks.get(colour.ordinal() * 2 + castling.ordinal()),
+						boardPosition.get(new Coordinate(4 + direction, row)));
 				assertNull(boardPosition.get(new Coordinate(rookColumn, row)));
 				assertNull(boardPosition.get(new Coordinate(4, row)));
 			}

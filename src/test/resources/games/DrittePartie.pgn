@@ -1,0 +1,18 @@
+[Event "second.at"]
+[Site "DESKTOP-IE1N39L"]
+[Date "2020.04.21"]
+[Round "1"]
+[White "Useless.chess-1.0-SNAPSHOT"]
+[Black "Export2"]
+[Result "*"]
+[BlackElo "2000"]
+[Time "08:05:11"]
+[WhiteElo "2200"]
+[Termination "unterminated"]
+[PlyCount "17"]
+[WhiteType "program"]
+[BlackType "program"]
+
+1. d4 c5 2. d5 Nf6 3. e3 e6 4. dxe6 dxe6 5. Bd2 Be7 6. Qf3 O-O 7. c4 Nc6 8.
+Ne2 Qd3 9. Nc1
+

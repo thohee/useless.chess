@@ -1,0 +1,22 @@
+[Event "Computer Schach Partie"]
+[Site "DESKTOP-IE1N39L"]
+[Date "2020.04.22"]
+[Round "?"]
+[White "Useless.chess-1.0-SNAPSHOT"]
+[Black "FlorinZepernick"]
+[Result "0-1"]
+[BlackElo "2400"]
+[ECO "A43"]
+[Opening "Alt Benoni"]
+[Time "15:57:25"]
+[Variation "2.d5 e6"]
+[WhiteElo "2200"]
+[Termination "normal"]
+[PlyCount "34"]
+[WhiteType "program"]
+[BlackType "human"]
+
+1. d4 c5 2. d5 e6 3. e3 Nf6 4. dxe6 fxe6 5. f4 d5 6. Bd2 Be7 7. Kf2 O-O 8.
+Qf3 Nc6 9. h4 Ne4+ 10. Ke1 Bxh4+ 11. g3 Bxg3+ 12. Ke2 e5 13. Be1 exf4 14.
+Qh5 Nf6 15. Qg5 Bg4+ 16. Kd3 Bxe1 17. Bg2 Nb4# 0-1
+
