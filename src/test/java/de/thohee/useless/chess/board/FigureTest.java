@@ -1,17 +1,11 @@
 package de.thohee.useless.chess.board;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import de.thohee.useless.chess.board.Figure;
 
 public class FigureTest {
-
-	@Rule
-	public ExpectedException expectedException = ExpectedException.none();
 
 	@Test
 	public void testParse() {
@@ -21,8 +15,7 @@ public class FigureTest {
 		assertEquals(Figure.Pawn, Figure.parse("P"));
 		assertEquals(Figure.Pawn, Figure.parse("X"));
 		assertEquals(Figure.Pawn, Figure.parse(""));
-		expectedException.expect(NullPointerException.class);
-		assertEquals(Figure.Pawn, Figure.parse(null));
+		assertThrows(NullPointerException.class, () -> Figure.parse(null));
 	}
 
 }

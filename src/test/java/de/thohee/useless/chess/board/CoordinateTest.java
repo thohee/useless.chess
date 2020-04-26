@@ -3,20 +3,14 @@ package de.thohee.useless.chess.board;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertThrows;
 
 import java.util.Arrays;
 import java.util.List;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
-
-import de.thohee.useless.chess.board.Coordinate;
 
 public class CoordinateTest {
-
-	@Rule
-	public ExpectedException expectedException = ExpectedException.none();
 
 	@Test
 	public void testToString() {
@@ -47,8 +41,7 @@ public class CoordinateTest {
 
 	@Test
 	public void testFailConstruction() {
-		expectedException.expect(AssertionError.class);
-		new Coordinate(1, 8);
+		assertThrows(AssertionError.class, () -> new Coordinate(1, 8));
 	}
 
 	@Test

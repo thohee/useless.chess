@@ -2,20 +2,16 @@ package de.thohee.useless.chess.board;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.ExpectedException;
 
 import de.thohee.useless.chess.board.Move.Capture;
 import de.thohee.useless.chess.board.Move.Castling;
 import de.thohee.useless.chess.board.Move.IllegalMoveFormatException;
 
 public class MoveTest {
-
-	@Rule
-	public ExpectedException expectedException = ExpectedException.none();
 
 	@Test
 	public void testParse() throws IllegalMoveFormatException {
@@ -65,8 +61,7 @@ public class MoveTest {
 		expectException("a2a3");
 		expectException("");
 
-		expectedException.expect(NullPointerException.class);
-		Move.parse(Colour.White, null);
+		assertThrows(NullPointerException.class, () -> Move.parse(Colour.White, null));
 	}
 
 	private void expectException(String s) {
