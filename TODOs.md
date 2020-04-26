@@ -1,8 +1,6 @@
 # TODOs
-* do not castle through check!
-* accept transformation of pawn into other figure than queen via UCI, e.g. kNight with suffix n
 * make king moves - except castlings - less probable
-* do not give chess to oppenent using valuable piece, if it can be beaten right away
+* do not give chess to opponent using valuable piece, if it can be beaten right away
 * do not differentiate w.r.t number of repetitions and pawn moves when looking up in transposition table, but only w.r.t. whether threshold for draw has been reached
 * evaluate victory with max value and defeat with min value
 * skip siblings when max value has been found in max() and when min value has been found in min()

@@ -46,9 +46,8 @@ public class MoveTest {
 			assertEquals(Coordinate.parse("a7"), move.getFrom());
 			assertEquals(Coordinate.parse("a8"), move.getTo());
 			assertEquals(Capture.None, move.getCapture());
-			assertNotNull(move.getNewPiece());
-			assertEquals(Colour.White, move.getNewPiece().getColour());
-			assertEquals(Figure.Queen, move.getNewPiece().getFigure());
+			assertNotNull(move.getNewFigure());
+			assertEquals(Figure.Queen, move.getNewFigure());
 		}
 
 		{
@@ -58,9 +57,8 @@ public class MoveTest {
 			assertEquals(Coordinate.parse("a2"), move.getFrom());
 			assertEquals(Coordinate.parse("a1"), move.getTo());
 			assertEquals(Capture.None, move.getCapture());
-			assertNotNull(move.getNewPiece());
-			assertEquals(Colour.Black, move.getNewPiece().getColour());
-			assertEquals(Figure.Queen, move.getNewPiece().getFigure());
+			assertNotNull(move.getNewFigure());
+			assertEquals(Figure.Queen, move.getNewFigure());
 		}
 
 		expectException("Pa2-a3");

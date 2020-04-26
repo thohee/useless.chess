@@ -18,7 +18,7 @@ public class Move {
 	private Figure figure = null;
 	private Coordinate from = null;
 	private Coordinate to = null;
-	private Piece newPiece = null;
+	private Figure newFigure = null;
 	private Capture capture = null;
 
 	// or a castling
@@ -32,14 +32,14 @@ public class Move {
 		this.capture = capture;
 	}
 
-	public Move(Colour colour, Figure figure, Coordinate from, Coordinate to, Capture capture, Piece newPiece) {
+	public Move(Colour colour, Figure figure, Coordinate from, Coordinate to, Capture capture, Figure newFigure) {
 		assert (figure.equals(Figure.Pawn));
 		this.colour = colour;
 		this.figure = figure;
 		this.from = from;
 		this.to = to;
 		this.capture = capture;
-		this.newPiece = newPiece;
+		this.newFigure = newFigure;
 	}
 
 	public Move(Colour colour, Castling castling) {
@@ -71,8 +71,8 @@ public class Move {
 		return capture;
 	}
 
-	public Piece getNewPiece() {
-		return newPiece;
+	public Figure getNewFigure() {
+		return newFigure;
 	}
 
 	@Override
@@ -84,7 +84,7 @@ public class Move {
 		result = prime * result + ((colour == null) ? 0 : colour.hashCode());
 		result = prime * result + ((figure == null) ? 0 : figure.hashCode());
 		result = prime * result + ((from == null) ? 0 : from.hashCode());
-		result = prime * result + ((newPiece == null) ? 0 : newPiece.getFigure().ordinal());
+		result = prime * result + ((newFigure == null) ? 0 : newFigure.hashCode());
 		result = prime * result + ((to == null) ? 0 : to.hashCode());
 		return result;
 	}
@@ -111,13 +111,11 @@ public class Move {
 				return false;
 		} else if (!from.equals(other.from))
 			return false;
-		if (newPiece == null) {
-			if (other.newPiece != null) {
+		if (newFigure == null) {
+			if (other.newFigure != null) {
 				return false;
 			}
-		} else if (!newPiece.getFigure().equals(other.newPiece.getFigure())) {
-			return false;
-		} else if (!newPiece.getColour().equals(other.newPiece.getColour())) {
+		} else if (!newFigure.equals(other.newFigure)) {
 			return false;
 		}
 		if (to == null) {
@@ -143,7 +141,7 @@ public class Move {
 		} else {
 			return (Figure.Pawn.equals(figure) ? "" : figure.toString()) + from.toString()
 					+ (capture != Capture.None ? "x" : "-") + to.toString()
-					+ (newPiece != null ? "=" + newPiece.getFigure().toString() : "")
+					+ (newFigure != null ? "=" + newFigure.toString() : "")
 					+ (capture.equals(Capture.EnPassant) ? "e.p." : "");
 		}
 	}
@@ -188,19 +186,18 @@ public class Move {
 				if (from == null || to == null) {
 					throw new IllegalMoveFormatException(s);
 				}
-				Piece newPiece = null;
+				Figure newFigure = null;
 				if (figure.equals(Figure.Pawn) && !enPassant
 						&& ((colour.equals(Colour.White) && to.getRow() == 7)
 								|| (colour.equals(Colour.Black) && to.getRow() == 0))
 						&& s.length() > 6 && s.contains("=")) {
-					Figure newFigure = Figure.parse(s.substring(i + 6));
-					newPiece = new Piece(colour, newFigure);
+					newFigure = Figure.parse(s.substring(i + 6));
 				}
 				Capture capture = isCapture ? (enPassant ? Capture.EnPassant : Capture.Regular) : Capture.None;
-				if (newPiece == null) {
+				if (newFigure == null) {
 					move = new Move(colour, figure, from, to, capture);
 				} else {
-					move = new Move(colour, figure, from, to, capture, newPiece);
+					move = new Move(colour, figure, from, to, capture, newFigure);
 				}
 			} else {
 				throw new IllegalMoveFormatException(s);

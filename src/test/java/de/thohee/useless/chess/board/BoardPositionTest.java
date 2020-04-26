@@ -285,9 +285,8 @@ public class BoardPositionTest {
 					assertEquals(Figure.Pawn, move.getFigure());
 					assertEquals(startPosition, move.getFrom());
 					assertEquals(targetPosition, move.getTo());
-					assertNotNull(move.getNewPiece());
-					assertEquals(colour, move.getNewPiece().getColour());
-					assertTrue(promotionFigures.contains(move.getNewPiece().getFigure()));
+					assertNotNull(move.getNewFigure());
+					assertTrue(promotionFigures.contains(move.getNewFigure()));
 				}
 			}
 

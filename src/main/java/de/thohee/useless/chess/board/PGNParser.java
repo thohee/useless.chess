@@ -71,8 +71,8 @@ public class PGNParser {
 			for (Move move : boardPosition.getPossibleMoves()) {
 				if (move.getCastling() == null && move.getFigure().equals(figure) && move.getCapture().equals(capture)
 						&& move.getTo().equals(target)
-						&& ((newFigure == null && move.getNewPiece() == null) || (newFigure != null
-								&& move.getNewPiece() != null && newFigure.equals(move.getNewPiece().getFigure())))) {
+						&& ((newFigure == null && move.getNewFigure() == null) || (newFigure != null
+								&& move.getNewFigure() != null && newFigure.equals(move.getNewFigure())))) {
 					possibleMoves.add(move);
 				}
 			}

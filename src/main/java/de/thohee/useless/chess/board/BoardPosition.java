@@ -136,7 +136,7 @@ public class BoardPosition {
 		BoardPosition newBoardPosition = new BoardPosition(this);
 		boolean moveWithoutPawnAndCapture = true;
 		if (move.getCastling() == null) {
-			movePiece(newBoardPosition, move.getFrom(), move.getTo(), move.getNewPiece());
+			movePiece(newBoardPosition, move.getFrom(), move.getTo(), move.getNewFigure());
 			newBoardPosition.castlingPieces.remove(this.get(move.getTo()));
 			moveWithoutPawnAndCapture = !move.getFigure().equals(Figure.Pawn) && move.getCapture().equals(Capture.None);
 		} else {
@@ -168,11 +168,11 @@ public class BoardPosition {
 		return newBoardPosition;
 	}
 
-	private static void movePiece(BoardPosition boardPosition, Coordinate from, Coordinate to, Piece newPiece) {
+	private static void movePiece(BoardPosition boardPosition, Coordinate from, Coordinate to, Figure newFigure) {
 		Piece piece = boardPosition.map.get(from);
 		assert (piece != null);
-		if (newPiece != null) {
-			piece = newPiece;
+		if (newFigure != null) {
+			piece = new Piece(piece.getColour(), newFigure);
 		}
 		if (Figure.Pawn.equals(piece.getFigure()) && to.getColumn() != from.getColumn()
 				&& boardPosition.map.get(to) == null) {
@@ -320,7 +320,7 @@ public class BoardPosition {
 		if (target.getRow() == (colour.equals(Colour.White) ? 7 : 0)) {
 			// promotion
 			for (Figure figure : promotionFigures) {
-				moves.add(new Move(colour, Figure.Pawn, position, target, capture, new Piece(colour, figure)));
+				moves.add(new Move(colour, Figure.Pawn, position, target, capture, figure));
 			}
 		} else {
 			moves.add(new Move(colour, Figure.Pawn, position, target, capture));
@@ -649,8 +649,7 @@ public class BoardPosition {
 		} else {
 			if (piece.getFigure().equals(Figure.Pawn) && Arrays.asList(0, 7).contains(to.getRow())) {
 				assert (newFigure != null);
-				Piece newPiece = new Piece(piece.getColour(), newFigure);
-				move = new Move(getColourToMove(), piece.getFigure(), from, to, capture, newPiece);
+				move = new Move(getColourToMove(), piece.getFigure(), from, to, capture, newFigure);
 			} else {
 				move = new Move(getColourToMove(), piece.getFigure(), from, to, capture);
 			}
@@ -712,7 +711,7 @@ public class BoardPosition {
 							// promotion to knight would require player decision
 							intendedMove = new Move(intendedMove.getColour(), intendedMove.getFigure(),
 									intendedMove.getFrom(), intendedMove.getTo(), intendedMove.getCapture(),
-									new Piece(intendedMove.getColour(), Figure.Queen));
+									Figure.Queen);
 						}
 					}
 				}

@@ -84,7 +84,7 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 
 	@Override
 	protected boolean isQuiescent(BoardPosition boardPosition) {
-		return !boardPosition.getAllPossibleMoves().stream().anyMatch(m -> m.getNewPiece() != null)
+		return !boardPosition.getAllPossibleMoves().stream().anyMatch(m -> m.getNewFigure() != null)
 				&& evaluateThreatsAndProtections(boardPosition) == 0;
 	}
 
@@ -248,7 +248,8 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 	@Override
 	protected List<Move> getPossibleMoves(BoardPosition boardPosition) {
 		// we do not exclude any moves but prioritize them
-		// looking at capture moves with high figure value first seems to improve the effect of alpha-beta-pruning
+		// looking at capture moves with high figure value first seems to improve the
+		// effect of alpha-beta-pruning
 		ArrayList<Move> sortedMoves = new ArrayList<>(boardPosition.getAllPossibleMoves());
 		Collections.sort(sortedMoves, new MoveComparator(boardPosition));
 		return sortedMoves;
