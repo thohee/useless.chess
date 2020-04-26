@@ -166,6 +166,7 @@ public class GameTest {
 		AnswerStream answerStream = new AnswerStream();
 
 		Game game = new Game(commandStream, new PrintStream(answerStream));
+		game.setLogFilename("Game.log");
 
 		Thread gameThread = new Thread(new Runnable() {
 			@Override

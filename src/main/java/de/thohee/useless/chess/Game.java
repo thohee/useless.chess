@@ -43,7 +43,7 @@ public class Game implements Player.OutputWriter {
 	private PrintStream outStream;
 	private String logFilename;
 
-	private static String getLogFilename() {
+	static String getLogFilename() {
 		String tmpdir = System.getProperty("java.io.tmpdir");
 		String logFilename = tmpdir + "useless.chess.log";
 		try {
@@ -66,7 +66,7 @@ public class Game implements Player.OutputWriter {
 		this.outStream = outputStream;
 	}
 
-	private void setLogFilename(String filename) {
+	void setLogFilename(String filename) {
 		this.logFilename = filename;
 	}
 
