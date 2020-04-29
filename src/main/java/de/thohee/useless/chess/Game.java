@@ -7,8 +7,6 @@ import java.io.PrintStream;
 import java.util.Scanner;
 
 import de.thohee.useless.chess.board.BoardPosition;
-import de.thohee.useless.chess.board.Coordinate;
-import de.thohee.useless.chess.board.Figure;
 import de.thohee.useless.chess.board.Move;
 import de.thohee.useless.chess.player.LexicographicMinimaxPlayer;
 import de.thohee.useless.chess.player.Player;
@@ -112,12 +110,12 @@ public class Game implements Player.OutputWriter {
 			if (inputLine != null && inputLine.startsWith(_position)) {
 				String startPosAndMoves = inputLine.substring(_position.length()).trim();
 				if (startPosAndMoves.startsWith(_startpos)) {
-					this.boardPosition = BoardPosition.getInitialPosition();
+					boardPosition = BoardPosition.getInitialPosition();
 					String maybeMoves = startPosAndMoves.substring(_startpos.length()).trim();
 					if (maybeMoves.startsWith(_moves)) {
 						String[] moveTokens = maybeMoves.substring(_moves.length()).trim().split(" ");
 						for (String moveToken : moveTokens) {
-							performMove(moveToken);
+							boardPosition = boardPosition.performUciMove(moveToken);
 						}
 					}
 					this.player = new LexicographicMinimaxPlayer(boardPosition.getColourToMove(), true);
@@ -171,36 +169,6 @@ public class Game implements Player.OutputWriter {
 			println(_info + e.getMessage());
 			return false;
 		}
-	}
-
-	public static Move parseMove(BoardPosition boardPosition, String moveToken) throws Exception {
-		Coordinate from = Coordinate.parse(moveToken.substring(0, 2));
-		Coordinate to = Coordinate.parse(moveToken.substring(2, 4));
-		Figure newFigure = null;
-		if (moveToken.length() > 4) {
-			String newFigureLetter = moveToken.substring(4, 5);
-			switch (newFigureLetter) {
-			case "q":
-				newFigure = Figure.Queen;
-				break;
-			case "r":
-				newFigure = Figure.Rook;
-				break;
-			case "b":
-				newFigure = Figure.Bishop;
-				break;
-			case "n":
-				newFigure = Figure.Knight;
-				break;
-			default:
-				throw new Exception(newFigureLetter);
-			}
-		}
-		return boardPosition.getMove(from, to, newFigure);
-	}
-
-	private void performMove(String moveToken) throws Exception {
-		boardPosition = boardPosition.performMove(parseMove(boardPosition, moveToken));
 	}
 
 	private void findBestMoveConcurrently(Player.Params params) {

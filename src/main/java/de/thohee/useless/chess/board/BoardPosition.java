@@ -745,4 +745,34 @@ public class BoardPosition {
 		resetCachedValues();
 	}
 
+	public Move parseUciMove(String uciMove) throws Exception {
+		Coordinate from = Coordinate.parse(uciMove.substring(0, 2));
+		Coordinate to = Coordinate.parse(uciMove.substring(2, 4));
+		Figure newFigure = null;
+		if (uciMove.length() > 4) {
+			String newFigureLetter = uciMove.substring(4, 5);
+			switch (newFigureLetter) {
+			case "q":
+				newFigure = Figure.Queen;
+				break;
+			case "r":
+				newFigure = Figure.Rook;
+				break;
+			case "b":
+				newFigure = Figure.Bishop;
+				break;
+			case "n":
+				newFigure = Figure.Knight;
+				break;
+			default:
+				throw new Exception(newFigureLetter);
+			}
+		}
+		return getMove(from, to, newFigure);
+	}
+
+	public BoardPosition performUciMove(String uciMove) throws Exception {
+		return performMove(parseUciMove(uciMove));
+	}
+
 }

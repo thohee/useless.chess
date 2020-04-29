@@ -1,10 +1,14 @@
 package de.thohee.useless.chess.player;
 
+import java.io.PrintStream;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.TreeSet;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 
 import de.thohee.useless.chess.board.BoardPosition;
 import de.thohee.useless.chess.board.Colour;
@@ -16,7 +20,7 @@ import de.thohee.useless.chess.board.Move;
  * @author Thomas
  *
  */
-public abstract class MinimaxPlayer extends Player {
+public abstract class MinimaxPlayer extends EnginePlayer {
 
 	private OutputWriter outputWriter = null;
 
@@ -30,6 +34,8 @@ public abstract class MinimaxPlayer extends Player {
 	private Long starttime = null;
 
 	private long visitedNodes = 0L;
+
+	private List<GameState> evaluatedChoices = null;
 
 	public MinimaxPlayer(Colour colour, boolean useTranspositionTable) {
 		super(colour);
@@ -102,7 +108,7 @@ public abstract class MinimaxPlayer extends Player {
 		private static final long serialVersionUID = 11135510449244745L;
 	}
 
-	private void writeLine(String line) {
+	protected void writeLine(String line) {
 		if (outputWriter != null) {
 			outputWriter.debug(line);
 		}
@@ -146,7 +152,6 @@ public abstract class MinimaxPlayer extends Player {
 			transpositionTable.clear();
 		}
 		choices.clear();
-		List<GameState> evaluatedChoices = null;
 		GameState root = new GameState(boardPosition);
 		try {
 			if (this.maxDepth != null) {
@@ -218,10 +223,15 @@ public abstract class MinimaxPlayer extends Player {
 						continue;
 					}
 					v = max(v, m);
-					if (v.compareTo(beta) >= 0) {
+					alpha = max(alpha, v);
+					if (alpha.compareTo(beta) >= 0) {
+						// minimizer already has a better or equally bad option
+						// no use to look for an even better alternative
+						break;
+					} else if (v.isMax()) {
+						// can't get better
 						break;
 					}
-					alpha = max(alpha, v);
 				}
 				result = v;
 			}
@@ -253,10 +263,15 @@ public abstract class MinimaxPlayer extends Player {
 						continue;
 					}
 					v = min(v, m);
-					if (v.compareTo(alpha) <= 0) {
+					beta = min(beta, v);
+					if (alpha.compareTo(beta) >= 0) {
+						// maximizer already found an equally good or better move elsewhere
+						// no use to look for a worse alternative
+						break;
+					} else if (v.isMin()) {
+						// can't get worse
 						break;
 					}
-					beta = min(beta, v);
 				}
 				result = v;
 			}
@@ -264,11 +279,31 @@ public abstract class MinimaxPlayer extends Player {
 				transpositionTable.put(gameState.getBoardPosition(), result);
 			}
 		}
-		if (gameState.getDepth() == 1 && !result.isInvalid()) {
+		if (gameState.getDepth() == 1 && !result.isInvalid() && alpha.compareTo(beta) < 0) {
+			// we must only take the value for granted, if we did not prune possibly worse
+			// alternatives!
 			gameState.setValue(result);
 			choices.add(gameState);
 		}
 		return result;
+	}
+
+	@Override
+	public void printEvaluatedChoices(PrintStream printStream) {
+		Collection<GameState> col = choices.isEmpty() && evaluatedChoices != null ? evaluatedChoices : choices;
+		for (GameState gameState : col) {
+			printStream.println(
+					gameState.getBoardPosition().getLastMove().asUciMove() + " " + gameState.getValue().toString());
+		}
+		printStream.println();
+	}
+
+	@Override
+	public Map<Move, Value> getEvaluatedMoves() {
+		Collection<GameState> evaluatedGameStates = choices.isEmpty() && evaluatedChoices != null ? evaluatedChoices
+				: choices;
+		return evaluatedGameStates.stream()
+				.collect(Collectors.toMap(g -> g.getBoardPosition().getLastMove(), GameState::getValue));
 	}
 
 	protected abstract Value getInvalid();
@@ -284,7 +319,7 @@ public abstract class MinimaxPlayer extends Player {
 	}
 
 	protected Integer getCutoffDepth() {
-		return getMaxDepth() != null ? Math.min(5, getMaxDepth().intValue() * 6 / 10) : null;
+		return getMaxDepth() != null ? Math.max(4, Math.min(5, getMaxDepth().intValue() * 6 / 10)) : null;
 	}
 
 	protected abstract boolean isQuiescent(BoardPosition boardPosition);

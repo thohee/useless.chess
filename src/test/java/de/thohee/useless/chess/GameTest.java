@@ -128,7 +128,7 @@ public class GameTest {
 			commandStream.sendCommand("stop");
 			String response = getResponse(answerStream);
 			assertTrue(response.startsWith("bestmove"));
-			Move engineMove = Game.parseMove(boardPosition, getMoveToken(response));
+			Move engineMove = boardPosition.parseUciMove(getMoveToken(response));
 			boardPosition = boardPosition.performMove(engineMove);
 			position += " " + engineMove.asUciMove();
 			Move testMove = boardPosition.getPossibleMoves().iterator().next();
@@ -138,7 +138,7 @@ public class GameTest {
 			commandStream.sendCommand("go depth 3");
 			response = getResponse(answerStream);
 			assertTrue(response.startsWith("bestmove"));
-			engineMove = Game.parseMove(boardPosition, getMoveToken(response));
+			engineMove = boardPosition.parseUciMove(getMoveToken(response));
 			boardPosition = boardPosition.performMove(engineMove);
 			position += " " + engineMove.asUciMove();
 			testMove = boardPosition.getPossibleMoves().iterator().next();

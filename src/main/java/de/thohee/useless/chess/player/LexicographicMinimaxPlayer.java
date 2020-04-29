@@ -27,6 +27,12 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 
 		public static final int SIZE = 5;
 
+		final static ValueVector MINIMUM = new ValueVector(Integer.MIN_VALUE).setMin();
+		final static ValueVector MAXIMUM = new ValueVector(Integer.MAX_VALUE).setMax();
+		final static ValueVector INVALID = new ValueVector().setInvalid();
+
+		private boolean min = false;
+		private boolean max = false;
 		private boolean invalid = false;
 
 		public ValueVector(int v) {
@@ -38,8 +44,19 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 		public ValueVector() {
 		}
 
-		public ValueVector(boolean invalid) {
-			this.invalid = invalid;
+		private ValueVector setMax() {
+			this.max = true;
+			return this;
+		}
+
+		private ValueVector setMin() {
+			this.min = true;
+			return this;
+		}
+
+		private ValueVector setInvalid() {
+			this.invalid = true;
+			return this;
 		}
 
 		@Override
@@ -59,26 +76,56 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 		public boolean isInvalid() {
 			return this.invalid;
 		}
+
+		@Override
+		public String toString() {
+			StringBuilder builder = new StringBuilder();
+			builder.append('(');
+			for (int i = 0; i < size(); ++i) {
+				if (i > 0) {
+					builder.append(", ");
+				}
+				builder.append(Integer.toString(get(i)));
+			}
+			builder.append(')');
+			return builder.toString();
+		}
+
+		@Override
+		public boolean isMin() {
+			return min;
+		}
+
+		@Override
+		public boolean isMax() {
+			return max;
+		}
 	}
-
-	private static Value MINIMUM = new ValueVector(Integer.MIN_VALUE);
-
-	private static Value MAXIMUM = new ValueVector(Integer.MAX_VALUE);
-
-	private static Value INVALID = new ValueVector(true);
 
 	private BoardPosition lastThreatAnalysisBoardPosition = null;
 	private int lastThreatAnalysisValue = 0;
 
 	@Override
 	protected Value evaluate(BoardPosition boardPosition) {
-		ValueVector result = new ValueVector();
-		result.add(evaluateOutcome(boardPosition));
-		result.add(evaluateMaterial(boardPosition));
-		result.add(evaluateThreatsAndProtections(boardPosition));
-		result.add(evaluateKingMobility(boardPosition));
-		result.add(evaluatePawnStructure(boardPosition));
-		assert (result.size() == ValueVector.SIZE);
+		ValueVector result = null;
+		if (boardPosition.isCheckmate()) {
+			result = boardPosition.getColourToMove().equals(this.colour) ? ValueVector.MINIMUM : ValueVector.MAXIMUM;
+		} else {
+			result = new ValueVector();
+			result.add(boardPosition.isDraw() ? -1 : 0);
+			result.add(evaluateMaterial(boardPosition));
+			result.add(evaluateThreatsAndProtections(boardPosition));
+			result.add(evaluateKingMobility(boardPosition));
+			result.add(evaluatePawnStructure(boardPosition));
+			assert (result.size() == ValueVector.SIZE);
+		}
+
+		List<Move> moves = boardPosition.getPerformedMoves();
+		int n = moves.size() - 1;
+		if (n > 0) {
+			writeLine(moves.get(n - 1).asUciMove() + " " + moves.get(n).asUciMove() + " " + result.toString());
+		}
+
 		return result;
 	}
 
@@ -86,17 +133,6 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 	protected boolean isQuiescent(BoardPosition boardPosition) {
 		return !boardPosition.getAllPossibleMoves().stream().anyMatch(m -> m.getNewFigure() != null)
 				&& evaluateThreatsAndProtections(boardPosition) == 0;
-	}
-
-	private int evaluateOutcome(BoardPosition boardPosition) {
-		if (boardPosition.isCheckmate()) {
-			return boardPosition.getColourToMove().equals(this.colour) ? -2 : 2;
-		} else if (boardPosition.isDraw()) {
-			// draw is worse than an undecided state, i.e. we aim for a win!
-			return -1;
-		} else {
-			return 0;
-		}
 	}
 
 	private int getValue(Figure figure) {
@@ -204,17 +240,17 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 
 	@Override
 	protected Value getInvalid() {
-		return INVALID;
+		return ValueVector.INVALID;
 	}
 
 	@Override
 	protected Value getMin() {
-		return MINIMUM;
+		return ValueVector.MINIMUM;
 	}
 
 	@Override
 	protected Value getMax() {
-		return MAXIMUM;
+		return ValueVector.MAXIMUM;
 	}
 
 	private class MoveComparator implements Comparator<Move> {
