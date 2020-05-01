@@ -35,8 +35,6 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 
 	private long visitedNodes = 0L;
 
-	private List<GameState> evaluatedChoices = null;
-
 	public MinimaxPlayer(Colour colour, boolean useTranspositionTable) {
 		super(colour);
 		if (useTranspositionTable) {
@@ -85,7 +83,9 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 
 	}
 
-	private TreeSet<GameState> choices = new TreeSet<>(new Comparator<GameState>() {
+	private List<GameState> previouslyEvaluatedMoves = null;
+
+	private TreeSet<GameState> evaluatedMoves = new TreeSet<>(new Comparator<GameState>() {
 		@Override
 		public int compare(GameState gameState1, GameState gameState2) {
 			// sorted by descending value
@@ -151,7 +151,7 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 		if (transpositionTable != null) {
 			transpositionTable.clear();
 		}
-		choices.clear();
+		evaluatedMoves.clear();
 		GameState root = new GameState(boardPosition);
 		try {
 			if (this.maxDepth != null) {
@@ -161,8 +161,8 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 				while (true) {
 					writeLine("maxDepth = " + maxDepth);
 					maxValue(root, getMin(), getMax());
-					evaluatedChoices = new ArrayList<>(choices);
-					choices.clear();
+					previouslyEvaluatedMoves = new ArrayList<>(evaluatedMoves);
+					evaluatedMoves.clear();
 					if (transpositionTable != null) {
 						transpositionTable.clear();
 					}
@@ -176,12 +176,12 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 			writeLine("#cache hits:      " + transpositionTable.getCacheHits());
 			writeLine("#cache misses:    " + transpositionTable.getCacheMisses());
 		}
-		if (evaluatedChoices != null && !evaluatedChoices.isEmpty()) {
+		if (previouslyEvaluatedMoves != null && !previouslyEvaluatedMoves.isEmpty()) {
 			writeLine("returning best choice of previous max depth");
-			return evaluatedChoices.get(0).getBoardPosition().getLastMove();
-		} else if (!choices.isEmpty()) {
+			return previouslyEvaluatedMoves.get(0).getBoardPosition().getLastMove();
+		} else if (!evaluatedMoves.isEmpty()) {
 			writeLine("returning best choice of current max depth");
-			return choices.iterator().next().getBoardPosition().getLastMove();
+			return evaluatedMoves.iterator().next().getBoardPosition().getLastMove();
 		} else {
 			writeLine("returning first possible move");
 			return boardPosition.getPossibleMoves().iterator().next();
@@ -205,7 +205,8 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 	private Value maxValue(GameState gameState, Value alpha, Value beta) throws InterruptedException {
 		++visitedNodes;
 		checkStop();
-		Value result = transpositionTable != null ? transpositionTable.get(gameState.getBoardPosition()) : null;
+		BoardPosition.Key key = gameState.getBoardPosition().getKey();
+		Value result = transpositionTable != null ? transpositionTable.get(key) : null;
 		if (result == null) {
 			if (gameState.getBoardPosition().isStillCheck()) {
 				// disallowed state
@@ -236,7 +237,7 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 				result = v;
 			}
 			if (transpositionTable != null) {
-				transpositionTable.put(gameState.getBoardPosition(), result);
+				transpositionTable.put(key, result);
 			}
 		}
 		return result;
@@ -245,7 +246,8 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 	private Value minValue(GameState gameState, Value alpha, Value beta) throws InterruptedException {
 		++visitedNodes;
 		checkStop();
-		Value result = transpositionTable != null ? transpositionTable.get(gameState.getBoardPosition()) : null;
+		BoardPosition.Key key = gameState.getBoardPosition().getKey();
+		Value result = transpositionTable != null ? transpositionTable.get(key) : null;
 		if (result == null) {
 			if (gameState.getBoardPosition().isStillCheck()) {
 				// disallowed state
@@ -276,21 +278,23 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 				result = v;
 			}
 			if (transpositionTable != null) {
-				transpositionTable.put(gameState.getBoardPosition(), result);
+				transpositionTable.put(key, result);
 			}
 		}
-		if (gameState.getDepth() == 1 && !result.isInvalid() && alpha.compareTo(beta) < 0) {
+		if (gameState.getDepth() == 1 && !result.isInvalid() && (result.isMin() || alpha.compareTo(beta) < 0)) {
 			// we must only take the value for granted, if we did not prune possibly worse
 			// alternatives!
 			gameState.setValue(result);
-			choices.add(gameState);
+			evaluatedMoves.add(gameState);
 		}
 		return result;
 	}
 
 	@Override
 	public void printEvaluatedChoices(PrintStream printStream) {
-		Collection<GameState> col = choices.isEmpty() && evaluatedChoices != null ? evaluatedChoices : choices;
+		Collection<GameState> col = evaluatedMoves.isEmpty() && previouslyEvaluatedMoves != null
+				? previouslyEvaluatedMoves
+				: evaluatedMoves;
 		for (GameState gameState : col) {
 			printStream.println(
 					gameState.getBoardPosition().getLastMove().asUciMove() + " " + gameState.getValue().toString());
@@ -300,8 +304,9 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 
 	@Override
 	public Map<Move, Value> getEvaluatedMoves() {
-		Collection<GameState> evaluatedGameStates = choices.isEmpty() && evaluatedChoices != null ? evaluatedChoices
-				: choices;
+		Collection<GameState> evaluatedGameStates = evaluatedMoves.isEmpty() && previouslyEvaluatedMoves != null
+				? previouslyEvaluatedMoves
+				: evaluatedMoves;
 		return evaluatedGameStates.stream()
 				.collect(Collectors.toMap(g -> g.getBoardPosition().getLastMove(), GameState::getValue));
 	}
@@ -319,7 +324,7 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 	}
 
 	protected Integer getCutoffDepth() {
-		return getMaxDepth() != null ? Math.max(4, Math.min(5, getMaxDepth().intValue() * 6 / 10)) : null;
+		return getMaxDepth() != null ? Math.max(2, Math.min(5, getMaxDepth().intValue() * 6 / 10)) : null;
 	}
 
 	protected abstract boolean isQuiescent(BoardPosition boardPosition);

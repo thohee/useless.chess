@@ -3,8 +3,8 @@ package de.thohee.useless.chess.player;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -15,6 +15,7 @@ import de.thohee.useless.chess.board.Figure;
 import de.thohee.useless.chess.board.Move;
 import de.thohee.useless.chess.board.Move.Capture;
 import de.thohee.useless.chess.board.Piece;
+import de.thohee.useless.chess.board.PositionedPiece;
 
 public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 
@@ -112,7 +113,7 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 			result = boardPosition.getColourToMove().equals(this.colour) ? ValueVector.MINIMUM : ValueVector.MAXIMUM;
 		} else {
 			result = new ValueVector();
-			result.add(boardPosition.isDraw() ? -1 : 0);
+			result.add(evaluateDraw(boardPosition));
 			result.add(evaluateMaterial(boardPosition));
 			result.add(evaluateThreatsAndProtections(boardPosition));
 			result.add(evaluateKingMobility(boardPosition));
@@ -158,10 +159,16 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 		return value;
 	}
 
+	private int evaluateDraw(BoardPosition boardPosition) {
+		return boardPosition.isDraw() ? -3 : (-1 * boardPosition.getRepetitions());
+	}
+
 	private int evaluateMaterial(BoardPosition boardPosition) {
 		int ownValues = 0;
 		int otherValues = 0;
-		for (Piece piece : boardPosition.getPieces()) {
+		Iterator<Piece> iterator = boardPosition.getPieces();
+		while (iterator.hasNext()) {
+			Piece piece = iterator.next();
 			int value = getValue(piece.getFigure());
 			if (piece.getColour().equals(this.colour)) {
 				ownValues += value;
@@ -179,11 +186,13 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 		boolean ourTurn = boardPosition.getColourToMove().equals(this.colour);
 		Colour opponentsColour = this.colour.opposite();
 		int threatsValue = 0;
-		for (Map.Entry<Coordinate, Piece> coordinateAndPiece : boardPosition.getPositionedPieces()) {
-			Piece piece = coordinateAndPiece.getValue();
+		Iterator<PositionedPiece> iterator = boardPosition.getPositionedPieces();
+		while (iterator.hasNext()) {
+			PositionedPiece coordinateAndPiece = iterator.next();
+			Piece piece = coordinateAndPiece.getPiece();
 			Colour pieceColour = piece.getColour();
 			if ((ourTurn && pieceColour.equals(opponentsColour)) || (!ourTurn && pieceColour.equals(this.colour))) {
-				Coordinate coordinate = coordinateAndPiece.getKey();
+				Coordinate coordinate = coordinateAndPiece.getCoordinate();
 				int pieceValue = getValue(piece.getFigure());
 				Set<Piece> threats = boardPosition.getThreatsTo(pieceColour, coordinate);
 				if (!threats.isEmpty()) {
@@ -219,17 +228,21 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 
 	private Integer evaluatePawnStructure(BoardPosition boardPosition) {
 		int pawnStructureValue = 0;
-		for (Map.Entry<Coordinate, Piece> entry : boardPosition.getPositionedPieces()) {
-			if (entry.getValue().getFigure().equals(Figure.Pawn) && entry.getValue().getColour().equals(this.colour)) {
-				int c = entry.getKey().getColumn();
+		Iterator<PositionedPiece> iterator = boardPosition.getPositionedPieces();
+		while (iterator.hasNext()) {
+			PositionedPiece positionedPiece = iterator.next();
+			Coordinate coordinate = positionedPiece.getCoordinate();
+			Piece piece = positionedPiece.getPiece();
+			if (piece.getFigure().equals(Figure.Pawn) && piece.getColour().equals(this.colour)) {
+				int c = coordinate.getColumn();
 				int columnFactor = c <= 3 ? c : 7 - c;
-				int row = entry.getKey().getRow();
-				if (entry.getValue().getColour().equals(Colour.Black)) {
+				int row = coordinate.getRow();
+				if (piece.getColour().equals(Colour.Black)) {
 					row = 7 - row;
 				}
 				pawnStructureValue += row * columnFactor;
 				if (row > 1) {
-					int protectionsByOtherPawns = (int) boardPosition.getProtections(entry.getKey()).stream()
+					int protectionsByOtherPawns = (int) boardPosition.getProtections(coordinate).stream()
 							.filter(p -> p.getFigure().equals(Figure.Pawn)).count();
 					pawnStructureValue += protectionsByOtherPawns * columnFactor;
 				}

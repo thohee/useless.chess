@@ -56,20 +56,20 @@ public class MinimaxPlayerTest implements Player.OutputWriter {
 		Player.Params params = new Player.Params();
 		params.maxDepthInPlies = 4;
 		boardPosition = boardPosition.performMove(player.makeMove(boardPosition, params));
-		Move knightMove = new Move(boardPosition.getColourToMove(), Figure.Knight, new Coordinate(5, 5),
-				new Coordinate(4, 3), Capture.None);
-		Move knightMoveWithPawnCapture = new Move(boardPosition.getColourToMove(), Figure.Knight, new Coordinate(5, 5),
-				new Coordinate(4, 3), Capture.Regular);
+		Move knightMove = new Move(boardPosition.getColourToMove(), Figure.Knight, Coordinate.get(5, 5),
+				Coordinate.get(4, 3), Capture.None);
+		Move knightMoveWithPawnCapture = new Move(boardPosition.getColourToMove(), Figure.Knight, Coordinate.get(5, 5),
+				Coordinate.get(4, 3), Capture.Regular);
 		if (boardPosition.getPossibleMoves().contains(knightMove)) {
 			boardPosition = boardPosition.performMove(knightMove);
 		} else if (boardPosition.getPossibleMoves().contains(knightMoveWithPawnCapture)) {
 			boardPosition = boardPosition.performMove(knightMoveWithPawnCapture);
 		}
 		boardPosition = boardPosition.performMove(player.makeMove(boardPosition, params));
-		Move queenMoveWithPawnCapture = new Move(boardPosition.getColourToMove(), Figure.Queen, new Coordinate(7, 3),
-				new Coordinate(5, 1), Capture.Regular);
-		Move queenMoveWithoutCapture = new Move(boardPosition.getColourToMove(), Figure.Queen, new Coordinate(7, 3),
-				new Coordinate(5, 1), Capture.None);
+		Move queenMoveWithPawnCapture = new Move(boardPosition.getColourToMove(), Figure.Queen, Coordinate.get(7, 3),
+				Coordinate.get(5, 1), Capture.Regular);
+		Move queenMoveWithoutCapture = new Move(boardPosition.getColourToMove(), Figure.Queen, Coordinate.get(7, 3),
+				Coordinate.get(5, 1), Capture.None);
 		if (boardPosition.getPossibleMoves().contains(queenMoveWithPawnCapture)) {
 			boardPosition = boardPosition.performMove(queenMoveWithPawnCapture);
 		} else if (boardPosition.getPossibleMoves().contains(queenMoveWithoutCapture)) {
@@ -103,7 +103,7 @@ public class MinimaxPlayerTest implements Player.OutputWriter {
 		Move move = player.makeMove(boardPosition, params);
 		System.out.println(boardPosition.toString());
 		player.printEvaluatedChoices(System.out);
-		assertTrue(avoidingMoves.contains(move));
+		assertTrue(move.asUciMove(), avoidingMoves.contains(move));
 	}
 
 	@Ignore

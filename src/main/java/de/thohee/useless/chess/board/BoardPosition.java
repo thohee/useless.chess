@@ -2,14 +2,13 @@ package de.thohee.useless.chess.board;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 import java.util.Stack;
 import java.util.stream.Collectors;
@@ -20,7 +19,39 @@ import de.thohee.useless.chess.board.Move.IllegalMoveFormatException;
 
 public class BoardPosition {
 
-	private HashMap<Coordinate, Piece> map = null;
+	public interface Key {
+
+	}
+
+	private class KeyImpl implements Key {
+		private ChessBoard board;
+		private int repetitions;
+		private int movesWithoutPawnAndCapture;
+
+		KeyImpl(ChessBoard board, int repetitions, int movesWithoutPawnAndCapture) {
+			this.board = board;
+			this.repetitions = repetitions;
+			this.movesWithoutPawnAndCapture = movesWithoutPawnAndCapture;
+		}
+
+		@Override
+		public int hashCode() {
+			return 1000 * board.hashCode() + (10 * movesWithoutPawnAndCapture) + repetitions;
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (obj instanceof KeyImpl) {
+				KeyImpl other = (KeyImpl) obj;
+				return other.repetitions == this.repetitions
+						&& other.movesWithoutPawnAndCapture == this.movesWithoutPawnAndCapture
+						&& other.board.equals(this.board);
+			}
+			return false;
+		}
+	}
+
+	private ChessBoard board = null;
 	private Set<Piece> castlingPieces = null;
 	private Move lastMove = null;
 	private BoardPosition predecessor = null;
@@ -37,13 +68,13 @@ public class BoardPosition {
 	private Boolean draw = null;
 
 	BoardPosition() {
-		map = new HashMap<>();
+		board = new ChessBoard();
 		castlingPieces = new HashSet<>();
 	}
 
 	@Override
 	public int hashCode() {
-		return repetitions + 10 * movesWithoutPawnAndCapture + 1000 * map.hashCode();
+		return repetitions + 10 * movesWithoutPawnAndCapture + 1000 * board.hashCode();
 	}
 
 	@Override
@@ -51,50 +82,53 @@ public class BoardPosition {
 		if (obj != null && obj instanceof BoardPosition) {
 			BoardPosition other = (BoardPosition) obj;
 			return this.depth == other.depth && this.repetitions == other.repetitions
-					&& this.movesWithoutPawnAndCapture == other.movesWithoutPawnAndCapture && this.map.equals(other.map)
-					&& this.castlingPieces.equals(other.castlingPieces);
+					&& this.movesWithoutPawnAndCapture == other.movesWithoutPawnAndCapture
+					&& this.board.equals(other.board) && this.castlingPieces.equals(other.castlingPieces);
 		} else {
 			return false;
 		}
+	}
 
+	public Key getKey() {
+		return new KeyImpl(this.board, this.repetitions, this.movesWithoutPawnAndCapture);
 	}
 
 	public static BoardPosition getInitialPosition() {
 		BoardPosition boardPosition = new BoardPosition();
-		Map<Coordinate, Piece> map = boardPosition.map;
-		map.put(new Coordinate(0, 0), new Piece(Colour.White, Figure.Rook));
-		map.put(new Coordinate(1, 0), new Piece(Colour.White, Figure.Knight));
-		map.put(new Coordinate(2, 0), new Piece(Colour.White, Figure.Bishop));
-		map.put(new Coordinate(3, 0), new Piece(Colour.White, Figure.Queen));
-		map.put(new Coordinate(4, 0), new Piece(Colour.White, Figure.King));
-		map.put(new Coordinate(5, 0), new Piece(Colour.White, Figure.Bishop));
-		map.put(new Coordinate(6, 0), new Piece(Colour.White, Figure.Knight));
-		map.put(new Coordinate(7, 0), new Piece(Colour.White, Figure.Rook));
+		ChessBoard map = boardPosition.board;
+		map.put(Coordinate.get(0, 0), new Piece(Colour.White, Figure.Rook));
+		map.put(Coordinate.get(1, 0), new Piece(Colour.White, Figure.Knight));
+		map.put(Coordinate.get(2, 0), new Piece(Colour.White, Figure.Bishop));
+		map.put(Coordinate.get(3, 0), new Piece(Colour.White, Figure.Queen));
+		map.put(Coordinate.get(4, 0), new Piece(Colour.White, Figure.King));
+		map.put(Coordinate.get(5, 0), new Piece(Colour.White, Figure.Bishop));
+		map.put(Coordinate.get(6, 0), new Piece(Colour.White, Figure.Knight));
+		map.put(Coordinate.get(7, 0), new Piece(Colour.White, Figure.Rook));
 		for (int c = 0; c <= 7; ++c) {
-			map.put(new Coordinate(c, 1), new Piece(Colour.White, Figure.Pawn));
+			map.put(Coordinate.get(c, 1), new Piece(Colour.White, Figure.Pawn));
 		}
-		map.put(new Coordinate(0, 7), new Piece(Colour.Black, Figure.Rook));
-		map.put(new Coordinate(1, 7), new Piece(Colour.Black, Figure.Knight));
-		map.put(new Coordinate(2, 7), new Piece(Colour.Black, Figure.Bishop));
-		map.put(new Coordinate(3, 7), new Piece(Colour.Black, Figure.Queen));
-		map.put(new Coordinate(4, 7), new Piece(Colour.Black, Figure.King));
-		map.put(new Coordinate(5, 7), new Piece(Colour.Black, Figure.Bishop));
-		map.put(new Coordinate(6, 7), new Piece(Colour.Black, Figure.Knight));
-		map.put(new Coordinate(7, 7), new Piece(Colour.Black, Figure.Rook));
+		map.put(Coordinate.get(0, 7), new Piece(Colour.Black, Figure.Rook));
+		map.put(Coordinate.get(1, 7), new Piece(Colour.Black, Figure.Knight));
+		map.put(Coordinate.get(2, 7), new Piece(Colour.Black, Figure.Bishop));
+		map.put(Coordinate.get(3, 7), new Piece(Colour.Black, Figure.Queen));
+		map.put(Coordinate.get(4, 7), new Piece(Colour.Black, Figure.King));
+		map.put(Coordinate.get(5, 7), new Piece(Colour.Black, Figure.Bishop));
+		map.put(Coordinate.get(6, 7), new Piece(Colour.Black, Figure.Knight));
+		map.put(Coordinate.get(7, 7), new Piece(Colour.Black, Figure.Rook));
 		for (int c = 0; c <= 7; ++c) {
-			map.put(new Coordinate(c, 6), new Piece(Colour.Black, Figure.Pawn));
+			map.put(Coordinate.get(c, 6), new Piece(Colour.Black, Figure.Pawn));
 		}
-		boardPosition.castlingPieces.add(map.get(new Coordinate(0, 0)));
-		boardPosition.castlingPieces.add(map.get(new Coordinate(4, 0)));
-		boardPosition.castlingPieces.add(map.get(new Coordinate(7, 0)));
-		boardPosition.castlingPieces.add(map.get(new Coordinate(0, 7)));
-		boardPosition.castlingPieces.add(map.get(new Coordinate(4, 7)));
-		boardPosition.castlingPieces.add(map.get(new Coordinate(7, 7)));
+		boardPosition.castlingPieces.add(map.get(Coordinate.get(0, 0)));
+		boardPosition.castlingPieces.add(map.get(Coordinate.get(4, 0)));
+		boardPosition.castlingPieces.add(map.get(Coordinate.get(7, 0)));
+		boardPosition.castlingPieces.add(map.get(Coordinate.get(0, 7)));
+		boardPosition.castlingPieces.add(map.get(Coordinate.get(4, 7)));
+		boardPosition.castlingPieces.add(map.get(Coordinate.get(7, 7)));
 		return boardPosition;
 	}
 
 	BoardPosition(BoardPosition other) {
-		map = new HashMap<>(other.map);
+		board = new ChessBoard(other.board);
 		castlingPieces = new HashSet<>(other.castlingPieces);
 	}
 
@@ -102,28 +136,32 @@ public class BoardPosition {
 		return depth;
 	}
 
+	public int getRepetitions() {
+		return repetitions;
+	}
+
 	public Piece get(Coordinate coordinate) {
-		return map.get(coordinate);
+		return board.get(coordinate);
 	}
 
 	public Piece get(int column, int row) {
-		return get(new Coordinate(column, row));
+		return get(Coordinate.get(column, row));
 	}
 
-	public Collection<Piece> getPieces() {
-		return map.values();
+	public Iterator<Piece> getPieces() {
+		return board.pieces();
 	}
 
-	public Set<Entry<Coordinate, Piece>> getPositionedPieces() {
-		return map.entrySet();
+	public int getNumberOfPieces() {
+		return board.size();
+	}
+
+	public Iterator<PositionedPiece> getPositionedPieces() {
+		return board.positionedPieces();
 	}
 
 	public Set<Piece> getCastlingPieces() {
 		return castlingPieces;
-	}
-
-	private boolean repeatedPosition3times() {
-		return this.repetitions >= 2;
 	}
 
 	public BoardPosition performMove(Move move) {
@@ -156,7 +194,7 @@ public class BoardPosition {
 					break;
 				}
 				if (i % 4 == 0) {
-					if (newBoardPosition.map.equals(previous.map)) {
+					if (newBoardPosition.board.equals(previous.board)) {
 						++newBoardPosition.repetitions;
 					} else {
 						break;
@@ -169,21 +207,21 @@ public class BoardPosition {
 	}
 
 	private static void movePiece(BoardPosition boardPosition, Coordinate from, Coordinate to, Figure newFigure) {
-		Piece piece = boardPosition.map.get(from);
+		Piece piece = boardPosition.board.get(from);
 		assert (piece != null);
 		if (newFigure != null) {
 			piece = new Piece(piece.getColour(), newFigure);
 		}
 		if (Figure.Pawn.equals(piece.getFigure()) && to.getColumn() != from.getColumn()
-				&& boardPosition.map.get(to) == null) {
+				&& boardPosition.board.get(to) == null) {
 			// en passant
 			int direction = piece.getColour().equals(Colour.White) ? 1 : -1;
 			Coordinate captureTarget = makeCoordinate(to.getColumn(), to.getRow() - direction);
 			assert (captureTarget != null && boardPosition.get(captureTarget) != null);
-			boardPosition.map.remove(captureTarget);
+			boardPosition.board.remove(captureTarget);
 		}
-		boardPosition.map.remove(from);
-		boardPosition.map.put(to, piece);
+		boardPosition.board.remove(from);
+		boardPosition.board.put(to, piece);
 	}
 
 	private static void performCastling(BoardPosition boardPosition, Colour colour, Castling castling) {
@@ -192,13 +230,13 @@ public class BoardPosition {
 			switch (colour) {
 			case White:
 				// rook (0,0) -> (3,0); king (4,0) -> (2,0)
-				movePiece(boardPosition, new Coordinate(0, 0), new Coordinate(3, 0), null);
-				movePiece(boardPosition, new Coordinate(4, 0), new Coordinate(2, 0), null);
+				movePiece(boardPosition, Coordinate.get(0, 0), Coordinate.get(3, 0), null);
+				movePiece(boardPosition, Coordinate.get(4, 0), Coordinate.get(2, 0), null);
 				break;
 			case Black:
 				// rook (0,7) -> (3,7); king (4,7) -> (2,7)
-				movePiece(boardPosition, new Coordinate(0, 7), new Coordinate(3, 7), null);
-				movePiece(boardPosition, new Coordinate(4, 7), new Coordinate(2, 7), null);
+				movePiece(boardPosition, Coordinate.get(0, 7), Coordinate.get(3, 7), null);
+				movePiece(boardPosition, Coordinate.get(4, 7), Coordinate.get(2, 7), null);
 				break;
 			}
 			break;
@@ -206,13 +244,13 @@ public class BoardPosition {
 			switch (colour) {
 			case White:
 				// rook (7,0) -> (5,0); king (4,0) -> (6,0)
-				movePiece(boardPosition, new Coordinate(7, 0), new Coordinate(5, 0), null);
-				movePiece(boardPosition, new Coordinate(4, 0), new Coordinate(6, 0), null);
+				movePiece(boardPosition, Coordinate.get(7, 0), Coordinate.get(5, 0), null);
+				movePiece(boardPosition, Coordinate.get(4, 0), Coordinate.get(6, 0), null);
 				break;
 			case Black:
 				// rook (7,7) -> (5,7); king (4,7) -> (6,7)
-				movePiece(boardPosition, new Coordinate(7, 7), new Coordinate(5, 7), null);
-				movePiece(boardPosition, new Coordinate(4, 7), new Coordinate(6, 7), null);
+				movePiece(boardPosition, Coordinate.get(7, 7), Coordinate.get(5, 7), null);
+				movePiece(boardPosition, Coordinate.get(4, 7), Coordinate.get(6, 7), null);
 				break;
 			}
 			break;
@@ -230,7 +268,7 @@ public class BoardPosition {
 
 	private boolean threatsToAny(Colour colour, int row, List<Integer> columns) {
 		for (int c : columns) {
-			if (!threatsTo(colour, new Coordinate(c, row)).isEmpty()) {
+			if (!threatsTo(colour, Coordinate.get(c, row)).isEmpty()) {
 				return true;
 			}
 		}
@@ -263,7 +301,7 @@ public class BoardPosition {
 
 	private static Coordinate makeCoordinate(int column, int row) {
 		if (0 <= column && column < 8 && 0 <= row && row < 8) {
-			return new Coordinate(column, row);
+			return Coordinate.get(column, row);
 		} else {
 			return null;
 		}
@@ -327,9 +365,9 @@ public class BoardPosition {
 		}
 	}
 
-	private void computePossibleMoves(Entry<Coordinate, Piece> positionedPiece, List<Move> moves) {
-		Piece piece = positionedPiece.getValue();
-		Coordinate position = positionedPiece.getKey();
+	private void computePossibleMoves(PositionedPiece positionedPiece, List<Move> moves) {
+		Piece piece = positionedPiece.getPiece();
+		Coordinate position = positionedPiece.getCoordinate();
 		Colour colour = piece.getColour();
 		switch (piece.getFigure()) {
 		case Pawn: {
@@ -465,25 +503,32 @@ public class BoardPosition {
 		return draw;
 	}
 
+	private boolean onlyKingsLeft(Iterator<Piece> iterator) {
+		while (iterator.hasNext()) {
+			if (!iterator.next().getFigure().equals(Figure.King)) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	private boolean draw() {
 
-		// 50 moves without capture and without pawn move
-		if (movesWithoutPawnAndCapture >= 50) {
+		if (this.movesWithoutPawnAndCapture >= 50) {
+			return true;
+		}
+
+		if (this.repetitions >= 2) {
 			return true;
 		}
 
 		// only the two kings are left
-		if (map.size() == 2 && map.values().stream().allMatch(p -> p.getFigure().equals(Figure.King))) {
+		if (board.size() == 2 && onlyKingsLeft(board.pieces())) {
 			return true;
 		}
 
 		// stalemate
 		if (stalemate()) {
-			return true;
-		}
-
-		// three times repeated same position
-		if (repeatedPosition3times()) {
 			return true;
 		}
 
@@ -505,8 +550,10 @@ public class BoardPosition {
 		Colour colourToMove = getColourToMove();
 		for (Colour colour : Arrays.asList(colourToMove.opposite(), colourToMove)) {
 			List<Move> moves = new LinkedList<>();
-			for (Entry<Coordinate, Piece> entry : map.entrySet()) {
-				if (entry.getValue().getColour().equals(colour)) {
+			Iterator<PositionedPiece> iterator = board.positionedPieces();
+			while (iterator.hasNext()) {
+				PositionedPiece entry = iterator.next();
+				if (entry.getPiece().getColour().equals(colour)) {
 					computePossibleMoves(entry, moves);
 				}
 			}
@@ -629,12 +676,12 @@ public class BoardPosition {
 	}
 
 	public Move getMove(Coordinate from, Coordinate to, Figure newFigure) {
-		Piece piece = map.get(from);
+		Piece piece = board.get(from);
 		assert (piece != null);
 		assert (piece.getColour().equals(getColourToMove()));
-		Capture capture = map.get(to) != null ? Capture.Regular : Capture.None;
+		Capture capture = board.get(to) != null ? Capture.Regular : Capture.None;
 		if (piece.getFigure().equals(Figure.Pawn) && to.getRow() == (piece.getColour().equals(Colour.White) ? 5 : 2)
-				&& map.get(to) == null && lastMove.getFigure().equals(Figure.Pawn)
+				&& board.get(to) == null && lastMove.getFigure().equals(Figure.Pawn)
 				&& lastMove.getTo().getColumn() == to.getColumn()
 				&& lastMove.getTo().getRow() == (to.getRow() + (piece.getColour().equals(Colour.White) ? -1 : 1))) {
 			capture = Capture.EnPassant;
@@ -731,7 +778,7 @@ public class BoardPosition {
 	}
 
 	void set(Coordinate coordinate, Piece piece) {
-		map.put(coordinate, piece);
+		board.put(coordinate, piece);
 		resetCachedValues();
 	}
 

@@ -9,15 +9,15 @@ import de.thohee.useless.chess.board.BoardPosition;
 
 public class TranspositionTable {
 
-	private static final int MAX_SIZE = 5000;
+	private static final int MAX_SIZE = 10000;
 
 	private long cacheHits = 0L;
 	private long cacheMisses = 0L;
 
-	private Map<BoardPosition, Value> hashMap = new ConcurrentHashMap<BoardPosition, Value>();
-	private Queue<BoardPosition> fifoQueue = new ConcurrentLinkedQueue<>();
+	private Map<BoardPosition.Key, Value> hashMap = new ConcurrentHashMap<BoardPosition.Key, Value>();
+	private Queue<BoardPosition.Key> fifoQueue = new ConcurrentLinkedQueue<>();
 
-	public Value get(BoardPosition boardPosition) {
+	public Value get(BoardPosition.Key boardPosition) {
 		Value value = hashMap.get(boardPosition);
 		if (value != null) {
 			++cacheHits;
@@ -27,7 +27,7 @@ public class TranspositionTable {
 		return value;
 	}
 
-	public void put(BoardPosition boardPosition, Value value) {
+	public void put(BoardPosition.Key boardPosition, Value value) {
 		hashMap.put(boardPosition, value);
 		fifoQueue.add(boardPosition);
 		while (fifoQueue.size() > MAX_SIZE) {

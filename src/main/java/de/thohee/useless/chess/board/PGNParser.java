@@ -46,7 +46,7 @@ public class PGNParser {
 		if (column == null || row == null) {
 			throw new IllegalMoveFormatException(m);
 		}
-		return new Coordinate(column, row);
+		return Coordinate.get(column, row);
 	}
 
 	private static Move parseMove(BoardPosition boardPosition, String moveString) throws IllegalMoveFormatException {
@@ -81,7 +81,7 @@ public class PGNParser {
 				Integer column = parseColumn(disambiguation);
 				Integer row = parseRow(disambiguation);
 				if (column != null && row != null) {
-					Coordinate src = new Coordinate(column, row);
+					Coordinate src = Coordinate.get(column, row);
 					possibleMoves = possibleMoves.stream().filter(m -> m.getFrom().equals(src))
 							.collect(Collectors.toList());
 				} else if (column != null) {

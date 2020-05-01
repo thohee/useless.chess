@@ -15,14 +15,14 @@ public class CoordinateTest {
 	@Test
 	public void testToString() {
 
-		assertEquals("a1", new Coordinate(0, 0).toString());
-		assertEquals("h8", new Coordinate(7, 7).toString());
+		assertEquals("a1", Coordinate.get(0, 0).toString());
+		assertEquals("h8", Coordinate.get(7, 7).toString());
 
 		List<String> columns = Arrays.asList("a", "b", "c", "d", "e", "f", "g", "h");
 
 		for (int c = 0; c < 8; ++c) {
 			for (int r = 0; r < 8; ++r) {
-				assertEquals(columns.get(c) + (r + 1), new Coordinate(c, r).toString());
+				assertEquals(columns.get(c) + (r + 1), Coordinate.get(c, r).toString());
 			}
 		}
 
@@ -33,21 +33,21 @@ public class CoordinateTest {
 
 		for (int c = 0; c < 8; ++c) {
 			for (int r = 0; r < 8; ++r) {
-				assertEquals(new Coordinate(c, r), new Coordinate(c, r));
-				assertFalse(new Coordinate(c, r).equals(new Coordinate(7 - c, r)));
+				assertEquals(Coordinate.get(c, r), Coordinate.get(c, r));
+				assertFalse(Coordinate.get(c, r).equals(Coordinate.get(7 - c, r)));
 			}
 		}
 	}
 
 	@Test
 	public void testFailConstruction() {
-		assertThrows(AssertionError.class, () -> new Coordinate(1, 8));
+		assertThrows(AssertionError.class, () -> Coordinate.get(1, 8));
 	}
 
 	@Test
 	public void testParse() {
 
-		assertEquals(new Coordinate(3, 7), Coordinate.parse("d8"));
+		assertEquals(Coordinate.get(3, 7), Coordinate.parse("d8"));
 		assertNull(Coordinate.parse("a9"));
 		assertNull(Coordinate.parse("i3"));
 		assertNull(Coordinate.parse("x"));
