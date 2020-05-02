@@ -27,9 +27,9 @@ import de.thohee.useless.chess.board.Move;
 import de.thohee.useless.chess.board.Move.Capture;
 import de.thohee.useless.chess.board.PGNParser;
 
-public class MinimaxPlayerTest implements Player.OutputWriter {
+public class ReadyPlayer1Test implements Player.OutputWriter {
 
-	private final static String logFilename = MinimaxPlayerTest.class.getSimpleName() + ".log";
+	private final static String logFilename = ReadyPlayer1Test.class.getSimpleName() + ".log";
 
 	@Before
 	public void reset() {
@@ -52,7 +52,7 @@ public class MinimaxPlayerTest implements Player.OutputWriter {
 			Move move = gameReport.getMoves().get(m);
 			boardPosition = boardPosition.performMove(move);
 		}
-		LexicographicMinimaxPlayer player = new LexicographicMinimaxPlayer(boardPosition.getColourToMove(), false);
+		ReadyPlayer1 player = new ReadyPlayer1(boardPosition.getColourToMove(), false);
 		Player.Params params = new Player.Params();
 		params.maxDepthInPlies = 4;
 		boardPosition = boardPosition.performMove(player.makeMove(boardPosition, params));
@@ -97,7 +97,7 @@ public class MinimaxPlayerTest implements Player.OutputWriter {
 		avoidingMoves.add(boardPosition.parseUciMove("d1c2"));
 		avoidingMoves.add(boardPosition.parseUciMove("d1d2"));
 		avoidingMoves.add(boardPosition.parseUciMove("d1d3"));
-		LexicographicMinimaxPlayer player = new LexicographicMinimaxPlayer(boardPosition.getColourToMove(), true);
+		ReadyPlayer1 player = new ReadyPlayer1(boardPosition.getColourToMove(), true);
 		Player.Params params = new Player.Params();
 		params.maxDepthInPlies = 2;
 		Move move = player.makeMove(boardPosition, params);
@@ -106,58 +106,64 @@ public class MinimaxPlayerTest implements Player.OutputWriter {
 		assertTrue(move.asUciMove(), avoidingMoves.contains(move));
 	}
 
+	private BoardPosition playGame(Map<Colour, Player> players, Player.Params params) {
+		BoardPosition boardPosition = BoardPosition.getInitialPosition();
+		int m = 1;
+		while (!boardPosition.getPossibleMoves().isEmpty()) {
+			Player player = players.get(boardPosition.getColourToMove());
+			Move move = player.makeMove(boardPosition, params);
+			if (boardPosition.getColourToMove().equals(Colour.White)) {
+				System.out.print(Integer.toString(m) + ": " + move.toString());
+				++m;
+			} else {
+				System.out.println(" " + move.toString());
+			}
+			boardPosition = boardPosition.performMove(move);
+		}
+		if (boardPosition.getColourToMove().equals(Colour.Black)) {
+			System.out.println();
+		}
+		System.out.println(boardPosition.getResult());
+		System.out.println(boardPosition.toString());
+		return boardPosition;
+	}
+
 	@Ignore
 	@Test
 	public void testPlay() {
-
 		Player.Params params = new Player.Params();
 		params.maxDepthInPlies = 5;
 
-		long totalDuration = 0L;
-		long numberOfMoves = 0L;
-
 		for (Colour ownColour : Colour.values()) {
 
-			for (int seed : Arrays.asList(13, 47, 71)) {
+			for (long seed : Arrays.asList(13L, 47L, 71L)) {
 
 				Player opponent = new RandomPlayer(ownColour.opposite(), seed);
-				LexicographicMinimaxPlayer self = new LexicographicMinimaxPlayer(ownColour, true);
+				ReadyPlayer1 self = new ReadyPlayer1(ownColour, true);
 
 				Map<Colour, Player> players = new HashMap<>();
 				players.put(opponent.getColour(), opponent);
 				players.put(self.getColour(), self);
 
-				BoardPosition boardPosition = BoardPosition.getInitialPosition();
-
-				int m = 1;
-				while (!boardPosition.getPossibleMoves().isEmpty()) {
-					Player player = players.get(boardPosition.getColourToMove());
-					long starttime = System.currentTimeMillis();
-					Move move = player.makeMove(boardPosition, params);
-					long duration = System.currentTimeMillis() - starttime;
-					if (player.getColour().equals(ownColour)) {
-						totalDuration += duration;
-						++numberOfMoves;
-					}
-					if (boardPosition.getColourToMove().equals(Colour.White)) {
-						System.out.print(Integer.toString(m) + ": " + move.toString());
-						++m;
-					} else {
-						System.out.println(" " + move.toString());
-					}
-					boardPosition = boardPosition.performMove(move);
-				}
-				if (boardPosition.getColourToMove().equals(Colour.Black)) {
-					System.out.println();
-				}
-				System.out.println(boardPosition.getResult());
-				System.out.println(boardPosition.toString());
+				BoardPosition boardPosition = playGame(players, params);
 				assertTrue(boardPosition.isCheckmate() && boardPosition.getColourToMove().equals(ownColour.opposite()));
 			}
 		}
+	}
 
-		double avgDuration = (double) totalDuration / (double) numberOfMoves;
-		System.out.println("average thinking duration: " + avgDuration);
+	@Ignore
+	@Test
+	public void testAvoidDraw() {
+		Player.Params params = new Player.Params();
+		params.maxDepthInPlies = 5;
+		Colour ownColour = Colour.Black;
+		ReadyPlayer1 self = new ReadyPlayer1(Colour.Black, true);
+		Player opponent = new RandomPlayer(ownColour.opposite(), 71L);
+		Map<Colour, Player> players = new HashMap<>();
+		players.put(opponent.getColour(), opponent);
+		players.put(self.getColour(), self);
+		BoardPosition boardPosition = playGame(players, params);
+		assertTrue(boardPosition.isCheckmate() && boardPosition.getColourToMove().equals(ownColour.opposite()));
 	}
 
 	@Override

@@ -1,0 +1,43 @@
+[Event "Computer Schach Partie"]
+[White "RandomPlayer"]
+[Black "Useless.chess-1.0-SNAPSHOT"]
+[WhiteType "program"]
+[BlackType "program"]
+
+1. e2-e4 c7-c6
+2. h2-h3 e7-e6
+3. Bf1-e2 g7-g6
+4. Be2-c4 a7-a6
+5. Ng1-f3 a6-a5
+6. Bc4-d5 c6xd5
+7. Nf3-h4 Qd8xh4
+8. b2-b4 Qh4xe4
+9. Qd1-e2 Qe4xg2
+10. a2-a4 Qg2xh1
+11. Qe2-f1 Qh1xf1
+12. Ke1xf1 Bf8-g7
+13. Bc1-a3 Bg7xa1
+14. b4-b5 b7-b6
+15. Ba3-c1 d5-d4
+16. Kf1-g2 d7-d5
+17. d2-d3 Nb8-d7
+18. Nb1-a3 Nd7-c5
+19. Kg2-g3 Nc5xa4
+20. Kg3-h4 Ba1-c3
+21. Na3-b1 Bc3-a1
+22. Kh4-g4 e6-e5
+23. Kg4-g5 Bc8xh3
+24. Bc1-d2 f7-f5
+25. Bd2-e3 d4xe3
+26. Nb1-d2 e3xd2
+27. d3-d4 d2-d1=Q
+28. c2-c3 Ba1xc3
+29. f2-f4 Bc3xd4
+30. Kg5-h4 e5xf4
+31. Kh4xh3 Qd1-e2
+32. Kh3-h4 Ra8-a6
+33. Kh4-h3 Ra6-a7
+34. Kh3-h4 Ra7-a6
+35. Kh4-h3 Ra6-a7
+36. Kh3-h4 Ra7-a6
+1/2-1/2

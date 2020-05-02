@@ -17,7 +17,7 @@ public class RandomPlayer extends Player {
 		randomGenerator = new Random(29071980);
 	}
 
-	public RandomPlayer(Colour colour, long seed) {
+	public RandomPlayer(Colour colour, Long seed) {
 		super(colour);
 		randomGenerator = new Random(seed);
 	}

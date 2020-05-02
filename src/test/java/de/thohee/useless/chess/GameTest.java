@@ -16,6 +16,7 @@ import org.junit.Test;
 import de.thohee.useless.chess.board.BoardPosition;
 import de.thohee.useless.chess.board.Coordinate;
 import de.thohee.useless.chess.board.Move;
+import de.thohee.useless.chess.player.ReadyPlayer1;
 
 public class GameTest {
 
@@ -113,7 +114,8 @@ public class GameTest {
 		CommandStream commandStream = new CommandStream();
 		AnswerStream answerStream = new AnswerStream();
 
-		Game game = new Game(commandStream, new PrintStream(answerStream));
+		Game game = new Game(commandStream, new PrintStream(answerStream),
+				Game.createPlayerConfiguration(ReadyPlayer1.class.getSimpleName()));
 
 		Thread gameThread = new Thread(new Runnable() {
 			@Override
@@ -177,7 +179,8 @@ public class GameTest {
 		CommandStream commandStream = new CommandStream();
 		AnswerStream answerStream = new AnswerStream();
 
-		Game game = new Game(commandStream, new PrintStream(answerStream));
+		Game game = new Game(commandStream, new PrintStream(answerStream),
+				Game.createPlayerConfiguration(ReadyPlayer1.class.getSimpleName()));
 		game.setLogFilename("Game.log");
 
 		Thread gameThread = new Thread(new Runnable() {
@@ -214,7 +217,8 @@ public class GameTest {
 		CommandStream commandStream = new CommandStream();
 		AnswerStream answerStream = new AnswerStream();
 
-		Game game = new Game(commandStream, new PrintStream(answerStream));
+		Game game = new Game(commandStream, new PrintStream(answerStream),
+				Game.createPlayerConfiguration(ReadyPlayer1.class.getSimpleName()));
 
 		Thread gameThread = new Thread(new Runnable() {
 			@Override

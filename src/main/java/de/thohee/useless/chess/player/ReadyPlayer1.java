@@ -17,90 +17,10 @@ import de.thohee.useless.chess.board.Move.Capture;
 import de.thohee.useless.chess.board.Piece;
 import de.thohee.useless.chess.board.PositionedPiece;
 
-public class LexicographicMinimaxPlayer extends MinimaxPlayer {
+public class ReadyPlayer1 extends MinimaxPlayer {
 
-	public LexicographicMinimaxPlayer(Colour colour, boolean useTranspositionTable) {
+	public ReadyPlayer1(Colour colour, Boolean useTranspositionTable) {
 		super(colour, useTranspositionTable);
-	}
-
-	private static class ValueVector extends ArrayList<Integer> implements Value {
-		private static final long serialVersionUID = 5403861563080301920L;
-
-		public static final int SIZE = 5;
-
-		final static ValueVector MINIMUM = new ValueVector(Integer.MIN_VALUE).setMin();
-		final static ValueVector MAXIMUM = new ValueVector(Integer.MAX_VALUE).setMax();
-		final static ValueVector INVALID = new ValueVector().setInvalid();
-
-		private boolean min = false;
-		private boolean max = false;
-		private boolean invalid = false;
-
-		public ValueVector(int v) {
-			for (int i = 0; i < SIZE; ++i) {
-				add(v);
-			}
-		}
-
-		public ValueVector() {
-		}
-
-		private ValueVector setMax() {
-			this.max = true;
-			return this;
-		}
-
-		private ValueVector setMin() {
-			this.min = true;
-			return this;
-		}
-
-		private ValueVector setInvalid() {
-			this.invalid = true;
-			return this;
-		}
-
-		@Override
-		public int compareTo(Value o) {
-			ValueVector other = (ValueVector) o;
-			assert (other.size() == size());
-			for (int i = 0; i < size(); ++i) {
-				int c = get(i).compareTo(other.get(i));
-				if (c != 0) {
-					return c;
-				}
-			}
-			return 0;
-		}
-
-		@Override
-		public boolean isInvalid() {
-			return this.invalid;
-		}
-
-		@Override
-		public String toString() {
-			StringBuilder builder = new StringBuilder();
-			builder.append('(');
-			for (int i = 0; i < size(); ++i) {
-				if (i > 0) {
-					builder.append(", ");
-				}
-				builder.append(Integer.toString(get(i)));
-			}
-			builder.append(')');
-			return builder.toString();
-		}
-
-		@Override
-		public boolean isMin() {
-			return min;
-		}
-
-		@Override
-		public boolean isMax() {
-			return max;
-		}
 	}
 
 	private BoardPosition lastThreatAnalysisBoardPosition = null;
@@ -118,7 +38,6 @@ public class LexicographicMinimaxPlayer extends MinimaxPlayer {
 			result.add(evaluateThreatsAndProtections(boardPosition));
 			result.add(evaluateKingMobility(boardPosition));
 			result.add(evaluatePawnStructure(boardPosition));
-			assert (result.size() == ValueVector.SIZE);
 		}
 
 		List<Move> moves = boardPosition.getPerformedMoves();

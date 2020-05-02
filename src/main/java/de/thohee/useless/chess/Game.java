@@ -4,12 +4,16 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintStream;
+import java.lang.reflect.Constructor;
+import java.util.ArrayList;
 import java.util.Scanner;
 
 import de.thohee.useless.chess.board.BoardPosition;
+import de.thohee.useless.chess.board.Colour;
 import de.thohee.useless.chess.board.Move;
-import de.thohee.useless.chess.player.LexicographicMinimaxPlayer;
+import de.thohee.useless.chess.player.ReadyPlayer1;
 import de.thohee.useless.chess.player.Player;
+import de.thohee.useless.chess.player.RandomPlayer;
 
 public class Game implements Player.OutputWriter {
 
@@ -33,6 +37,7 @@ public class Game implements Player.OutputWriter {
 	private static final String _recv = "recv: ";
 	private static final String _debg = "debg: ";
 
+	private PlayerConfiguration playerConfiguration;
 	private Player player;
 	private BoardPosition boardPosition;
 	private Thread playerThread;
@@ -53,15 +58,83 @@ public class Game implements Player.OutputWriter {
 		return logFilename;
 	}
 
-	public static void main(String[] args) {
-		Game game = new Game(System.in, System.out);
-		game.setLogFilename(getLogFilename());
-		game.playUciGame();
+	static class PlayerConfiguration {
+		Class<? extends Player> playerClass;
+		Class<?>[] constructorParameterTypes;
+		Object[] constructorParameters;
 	}
 
-	Game(InputStream inputStream, PrintStream outputStream) {
+	static PlayerConfiguration createPlayerConfiguration(String classSimpleName, Object... additionalParams)
+			throws Exception {
+		if (ReadyPlayer1.class.getSimpleName().equals(classSimpleName)) {
+			return createPlayerConfiguration(ReadyPlayer1.class, true);
+		} else if (RandomPlayer.class.getSimpleName().equals(classSimpleName)) {
+			return createPlayerConfiguration(RandomPlayer.class, additionalParams);
+		} else {
+			throw new Exception(classSimpleName);
+		}
+	}
+
+	private static PlayerConfiguration createPlayerConfiguration(Class<? extends Player> playerClass,
+			Object... additionalParams) {
+		PlayerConfiguration playerConfiguration = new PlayerConfiguration();
+		playerConfiguration.playerClass = playerClass;
+		playerConfiguration.constructorParameterTypes = new Class<?>[additionalParams.length + 1];
+		playerConfiguration.constructorParameterTypes[0] = Colour.class; // obligatory parameter for all players
+		playerConfiguration.constructorParameters = new Object[additionalParams.length + 1];
+		playerConfiguration.constructorParameters[0] = null; // will be decided later
+		for (int p = 0; p < additionalParams.length; ++p) {
+			playerConfiguration.constructorParameterTypes[p + 1] = additionalParams[p].getClass();
+			playerConfiguration.constructorParameters[p + 1] = additionalParams[p];
+		}
+		return playerConfiguration;
+	}
+
+	private static String getPlayerClassName(String[] args) {
+		for (int i = 0; i < args.length; ++i) {
+			if (args[i].equals("--player") && i < args.length - 1) {
+				return args[i + 1];
+			}
+		}
+		return ReadyPlayer1.class.getSimpleName();
+	}
+
+	private static Object[] getPlayerOptions(String[] args) {
+		ArrayList<Object> options = new ArrayList<>();
+		for (int i = 0; i < args.length; ++i) {
+			if (args[i].equals("--player")) {
+				int o = i + 2;
+				while (o < args.length) {
+					String arg = args[o];
+					++o;
+					try {
+						options.add(Long.parseLong(arg));
+					} catch (NumberFormatException e) {
+						options.add(arg);
+					}
+				}
+				break;
+			}
+		}
+		return options.toArray();
+	}
+
+	public static void main(String[] args) {
+		try {
+			String playerClassName = getPlayerClassName(args);
+			Object[] playerOptions = getPlayerOptions(args);
+			Game game = new Game(System.in, System.out, createPlayerConfiguration(playerClassName, playerOptions));
+			game.setLogFilename(getLogFilename());
+			game.playUciGame();
+		} catch (Throwable e) {
+			System.err.println(e.getMessage());
+		}
+	}
+
+	Game(InputStream inputStream, PrintStream outputStream, PlayerConfiguration playerConfiguration) {
 		this.inStream = inputStream;
 		this.outStream = outputStream;
+		this.playerConfiguration = playerConfiguration;
 	}
 
 	void setLogFilename(String filename) {
@@ -118,7 +191,11 @@ public class Game implements Player.OutputWriter {
 							boardPosition = boardPosition.performUciMove(moveToken);
 						}
 					}
-					this.player = new LexicographicMinimaxPlayer(boardPosition.getColourToMove(), true);
+					Constructor<? extends Player> constructor = playerConfiguration.playerClass
+							.getConstructor(playerConfiguration.constructorParameterTypes);
+					Object[] params = playerConfiguration.constructorParameters.clone();
+					params[0] = boardPosition.getColourToMove();
+					this.player = constructor.newInstance(params);
 					this.player.setOutputWriter(this);
 					return true;
 				} else {

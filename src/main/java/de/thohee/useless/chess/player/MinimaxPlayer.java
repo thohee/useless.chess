@@ -281,7 +281,7 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 				transpositionTable.put(key, result);
 			}
 		}
-		if (gameState.getDepth() == 1 && !result.isInvalid() && (result.isMin() || alpha.compareTo(beta) < 0)) {
+		if (gameState.getDepth() == 1 && !result.isInvalid() && (alpha.isMin() || alpha.compareTo(beta) < 0)) {
 			// we must only take the value for granted, if we did not prune possibly worse
 			// alternatives!
 			gameState.setValue(result);
