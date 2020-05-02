@@ -198,6 +198,7 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 
 	private boolean terminalTest(GameState gameState) {
 		return (getMaxDepth() != null && gameState.getDepth() >= getMaxDepth())
+				|| gameState.getBoardPosition().isDrawDisregardingStalemate()
 				|| gameState.getBoardPosition().getAllPossibleMoves().isEmpty() || (getCutoffDepth() != null
 						&& gameState.getDepth() >= getCutoffDepth() && isQuiescent(gameState.getBoardPosition()));
 	}
@@ -217,12 +218,14 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 			} else {
 				Value v = getMin();
 				List<Move> possibleMoves = getPossibleMoves(gameState.getBoardPosition());
+				boolean atLeastOneValid = false;
 				for (Move move : possibleMoves) {
 					GameState successor = gameState.createSuccessorState(move);
 					Value m = minValue(successor, alpha, beta);
 					if (m.isInvalid()) {
 						continue;
 					}
+					atLeastOneValid = true;
 					v = max(v, m);
 					alpha = max(alpha, v);
 					if (alpha.compareTo(beta) >= 0) {
@@ -234,7 +237,12 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 						break;
 					}
 				}
-				result = v;
+				if (atLeastOneValid) {
+					result = v;
+				} else {
+					// we are actually in a terminal state
+					result = evaluate(gameState.getBoardPosition());
+				}
 			}
 			if (transpositionTable != null) {
 				transpositionTable.put(key, result);
@@ -258,12 +266,14 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 			} else {
 				Value v = getMax();
 				List<Move> possibleMoves = getPossibleMoves(gameState.getBoardPosition());
+				boolean atLeastOneValid = false;
 				for (Move move : possibleMoves) {
 					GameState successor = gameState.createSuccessorState(move);
 					Value m = maxValue(successor, alpha, beta);
 					if (m.isInvalid()) {
 						continue;
 					}
+					atLeastOneValid = true;
 					v = min(v, m);
 					beta = min(beta, v);
 					if (alpha.compareTo(beta) >= 0) {
@@ -275,13 +285,19 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 						break;
 					}
 				}
+				if (atLeastOneValid) {
+					result = v;
+				} else {
+					// we are actually in a terminal state
+					result = evaluate(gameState.getBoardPosition());
+				}
 				result = v;
 			}
 			if (transpositionTable != null) {
 				transpositionTable.put(key, result);
 			}
 		}
-		if (gameState.getDepth() == 1 && !result.isInvalid() && (alpha.isMin() || alpha.compareTo(beta) < 0)) {
+		if (gameState.getDepth() == 1 && !result.isInvalid() && (result.isMin() || alpha.compareTo(beta) < 0)) {
 			// we must only take the value for granted, if we did not prune possibly worse
 			// alternatives!
 			gameState.setValue(result);

@@ -512,7 +512,7 @@ public class BoardPosition {
 		return true;
 	}
 
-	private boolean draw() {
+	public boolean isDrawDisregardingStalemate() {
 
 		if (this.movesWithoutPawnAndCapture >= 50) {
 			return true;
@@ -524,6 +524,15 @@ public class BoardPosition {
 
 		// only the two kings are left
 		if (board.size() == 2 && onlyKingsLeft(board.pieces())) {
+			return true;
+		}
+
+		return false;
+	}
+
+	private boolean draw() {
+
+		if (isDrawDisregardingStalemate()) {
 			return true;
 		}
 

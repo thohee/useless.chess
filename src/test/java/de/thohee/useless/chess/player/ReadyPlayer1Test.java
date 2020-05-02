@@ -2,9 +2,11 @@ package de.thohee.useless.chess.player;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Arrays;
@@ -25,6 +27,7 @@ import de.thohee.useless.chess.board.Figure;
 import de.thohee.useless.chess.board.GameReport;
 import de.thohee.useless.chess.board.Move;
 import de.thohee.useless.chess.board.Move.Capture;
+import de.thohee.useless.chess.board.Move.IllegalMoveFormatException;
 import de.thohee.useless.chess.board.PGNParser;
 
 public class ReadyPlayer1Test implements Player.OutputWriter {
@@ -164,6 +167,29 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 		players.put(self.getColour(), self);
 		BoardPosition boardPosition = playGame(players, params);
 		assertTrue(boardPosition.isCheckmate() && boardPosition.getColourToMove().equals(ownColour.opposite()));
+	}
+
+	@Test
+	public void testAvoidDraw2() throws FileNotFoundException, IllegalMoveFormatException {
+		Player.Params params = new Player.Params();
+		params.maxDepthInPlies = 5;
+		ReadyPlayer1 player = new ReadyPlayer1(Colour.Black, true);
+
+		File pgnFile = new File("src/test/resources/games/DrawAgainstRandomPlayer2.pgn");
+		assertTrue(pgnFile.exists() && pgnFile.isFile());
+		List<GameReport> games = PGNParser.parse(pgnFile.getPath());
+		assertEquals(1, games.size());
+		GameReport gameReport = games.get(0);
+		BoardPosition boardPosition = BoardPosition.getInitialPosition();
+		for (int m = 0; m < 101; ++m) {
+			Move move = gameReport.getMoves().get(m);
+			boardPosition = boardPosition.performMove(move);
+		}
+		Move unexpectedMove = boardPosition.getMove(Coordinate.a2, Coordinate.b1);
+		Move move = player.makeMove(boardPosition, params);
+		player.printEvaluatedChoices(System.out);
+		assertNotEquals(unexpectedMove, move);
+		assertFalse(boardPosition.performMove(move).isDraw());
 	}
 
 	@Override
