@@ -2,6 +2,7 @@ package de.thohee.useless.chess.board;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -454,7 +455,7 @@ public class BoardPosition {
 	}
 
 	public Set<Piece> getThreatsTo(Colour colour, Coordinate coordinate) {
-		analyze();
+		analyze0();
 		return threatsTo(colour, coordinate);
 	}
 
@@ -780,6 +781,17 @@ public class BoardPosition {
 	}
 
 	// unit test methods
+
+	public static BoardPosition createPosition(Collection<PositionedPiece> positionedPieces, Colour colourToMove) {
+		BoardPosition boardPosition = new BoardPosition();
+		for (PositionedPiece pp : positionedPieces) {
+			boardPosition.set(pp.getCoordinate(), pp.getPiece());
+		}
+		if (colourToMove.equals(Colour.Black)) {
+			boardPosition.lastMove = new Move(Colour.White, Castling.KingSide);
+		}
+		return boardPosition;
+	}
 
 	private void resetCachedValues() {
 		this.allPossibleMoves = null;

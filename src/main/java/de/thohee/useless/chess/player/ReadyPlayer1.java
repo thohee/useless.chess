@@ -5,6 +5,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -14,13 +15,30 @@ import de.thohee.useless.chess.board.Coordinate;
 import de.thohee.useless.chess.board.Figure;
 import de.thohee.useless.chess.board.Move;
 import de.thohee.useless.chess.board.Move.Capture;
+import de.thohee.useless.chess.board.Move.IllegalMoveFormatException;
 import de.thohee.useless.chess.board.Piece;
 import de.thohee.useless.chess.board.PositionedPiece;
 
 public class ReadyPlayer1 extends MinimaxPlayer {
 
+	private String firstMoveAsWhite = null;
+	private boolean openings = false;
+
+	public ReadyPlayer1(Colour colour) {
+		super(colour, true);
+	}
+
 	public ReadyPlayer1(Colour colour, Boolean useTranspositionTable) {
 		super(colour, useTranspositionTable);
+	}
+
+	public ReadyPlayer1(Colour colour, Boolean useTranspositionTable, String firstMoveAsWhite) {
+		super(colour, useTranspositionTable);
+		this.firstMoveAsWhite = firstMoveAsWhite;
+	}
+
+	void noOpenings() {
+		this.openings = false;
 	}
 
 	private BoardPosition lastThreatAnalysisBoardPosition = null;
@@ -36,8 +54,8 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			result.add(evaluateDraw(boardPosition));
 			result.add(evaluateMaterial(boardPosition));
 			result.add(evaluateThreatsAndProtections(boardPosition));
-			result.add(evaluateKingMobility(boardPosition));
-			result.add(evaluatePawnStructure(boardPosition));
+			result.add(evaluateOpeningMidgameTacticsAndEndgame(boardPosition));
+//			result.add(evaluatePawnByPawnProtections(boardPosition));
 		}
 
 		List<Move> moves = boardPosition.getPerformedMoves();
@@ -55,7 +73,7 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 				&& evaluateThreatsAndProtections(boardPosition) == 0;
 	}
 
-	private int getValue(Figure figure) {
+	static int getValue(Figure figure) {
 		int value = 0;
 		switch (figure) {
 		case Pawn:
@@ -98,54 +116,64 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 		return ownValues - otherValues;
 	}
 
-	private int evaluateThreatsAndProtections(BoardPosition boardPosition) {
+	int evaluateThreatsAndProtections(BoardPosition boardPosition) {
+		// test if exactly the same object (==) has already been evaluated
 		if (boardPosition == this.lastThreatAnalysisBoardPosition) {
+			// computed during terminal test
 			return this.lastThreatAnalysisValue;
 		}
-		boolean ourTurn = boardPosition.getColourToMove().equals(this.colour);
-		Colour opponentsColour = this.colour.opposite();
-		int threatsValue = 0;
+		int[] valueLosses = new int[2];
+		valueLosses[0] = 0;
+		valueLosses[1] = 0;
 		Iterator<PositionedPiece> iterator = boardPosition.getPositionedPieces();
 		while (iterator.hasNext()) {
 			PositionedPiece coordinateAndPiece = iterator.next();
 			Piece piece = coordinateAndPiece.getPiece();
-			Colour pieceColour = piece.getColour();
-			if ((ourTurn && pieceColour.equals(opponentsColour)) || (!ourTurn && pieceColour.equals(this.colour))) {
-				Coordinate coordinate = coordinateAndPiece.getCoordinate();
-				int pieceValue = getValue(piece.getFigure());
-				Set<Piece> threats = boardPosition.getThreatsTo(pieceColour, coordinate);
-				if (!threats.isEmpty()) {
-					int valueDifference = threats.stream().map(p -> Math.max(0, pieceValue - getValue(p.getFigure())))
-							.max(Integer::compareTo).orElse(0);
-					if (valueDifference == 0 && boardPosition.getProtections(coordinate).isEmpty()) {
-						valueDifference = pieceValue;
+			Coordinate coordinate = coordinateAndPiece.getCoordinate();
+			int pieceValue = getValue(piece.getFigure());
+			Set<Piece> threats = boardPosition.getThreatsTo(piece.getColour(), coordinate);
+			if (!threats.isEmpty()) {
+				// if there are no protections then the piece value is lost
+				int valueLoss = pieceValue;
+				Set<Piece> protections = boardPosition.getProtections(coordinate);
+				if (!protections.isEmpty()) {
+					ArrayList<Integer> threatValues = threats.stream().map(p -> getValue(p.getFigure()))
+							.collect(Collectors.toCollection(ArrayList::new));
+					threatValues.sort(Integer::compare);
+					ArrayList<Integer> protectionValues = protections.stream().map(p -> getValue(p.getFigure()))
+							.collect(Collectors.toCollection(ArrayList::new));
+					protectionValues.sort(Integer::compare);
+					for (int t = 0; t < threatValues.size(); ++t) {
+						if (t < protectionValues.size()) {
+							// attacking piece gets beaten
+							valueLoss -= threatValues.get(t);
+							if (t + 1 < threatValues.size()) {
+								// but also protector is attacked
+								valueLoss += protectionValues.get(t);
+							}
+						} else {
+							break;
+						}
 					}
-					if (ourTurn) {
-						threatsValue += valueDifference;
-					} else {
-						threatsValue -= valueDifference;
-					}
+					// if attacked color would actually gain value, we do not count this threat
+					valueLoss = Math.max(0, valueLoss);
 				}
+				valueLosses[piece.getColour().ordinal()] += valueLoss;
 			}
 		}
+		int threatsValue = valueLosses[getColour().opposite().ordinal()] - valueLosses[getColour().ordinal()];
 		this.lastThreatAnalysisValue = threatsValue;
 		this.lastThreatAnalysisBoardPosition = boardPosition;
 		return threatsValue;
 	}
 
-	private Integer evaluateKingMobility(BoardPosition boardPosition) {
-		Set<Piece> ownCastlingPieces = boardPosition.getCastlingPieces().stream()
-				.filter(p -> p.getColour().equals(this.colour)).collect(Collectors.toSet());
-		if (!ownCastlingPieces.isEmpty()
-				&& !ownCastlingPieces.stream().anyMatch(p -> p.getFigure().equals(Figure.King))) {
-			// do not move the king as long as castling is still possible
-			return -1;
-		} else {
-			return 0;
-		}
+	private Integer evaluateOpeningMidgameTacticsAndEndgame(BoardPosition boardPosition) {
+		// TODO
+		return 0;
 	}
 
-	private Integer evaluatePawnStructure(BoardPosition boardPosition) {
+	@SuppressWarnings("unused")
+	private Integer evaluatePawnByPawnProtections(BoardPosition boardPosition) {
 		int pawnStructureValue = 0;
 		Iterator<PositionedPiece> iterator = boardPosition.getPositionedPieces();
 		while (iterator.hasNext()) {
@@ -153,17 +181,14 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			Coordinate coordinate = positionedPiece.getCoordinate();
 			Piece piece = positionedPiece.getPiece();
 			if (piece.getFigure().equals(Figure.Pawn) && piece.getColour().equals(this.colour)) {
-				int c = coordinate.getColumn();
-				int columnFactor = c <= 3 ? c : 7 - c;
 				int row = coordinate.getRow();
 				if (piece.getColour().equals(Colour.Black)) {
 					row = 7 - row;
 				}
-				pawnStructureValue += row * columnFactor;
 				if (row > 1) {
 					int protectionsByOtherPawns = (int) boardPosition.getProtections(coordinate).stream()
 							.filter(p -> p.getFigure().equals(Figure.Pawn)).count();
-					pawnStructureValue += protectionsByOtherPawns * columnFactor;
+					pawnStructureValue += protectionsByOtherPawns;
 				}
 			}
 		}
@@ -215,12 +240,75 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 
 	@Override
 	protected List<Move> getPossibleMoves(BoardPosition boardPosition) {
+		if (openings && boardPosition.getDepth() <= 1 && boardPosition.getColourToMove().equals(getColour())) {
+			return playOpening(boardPosition);
+		}
 		// we do not exclude any moves but prioritize them
 		// looking at capture moves with high figure value first seems to improve the
 		// effect of alpha-beta-pruning
 		ArrayList<Move> sortedMoves = new ArrayList<>(boardPosition.getAllPossibleMoves());
 		Collections.sort(sortedMoves, new MoveComparator(boardPosition));
 		return sortedMoves;
+	}
+
+	private List<Move> playOpening(BoardPosition boardPosition) {
+		assert (boardPosition.getDepth() <= 1 && boardPosition.getColourToMove().equals(getColour()));
+		List<Move> moves = new ArrayList<>();
+		if (boardPosition.getDepth() == 0) {
+			assert (boardPosition.getColourToMove().equals(Colour.White));
+			Move firstMove = null;
+			if (firstMoveAsWhite != null) {
+				try {
+					firstMove = boardPosition.parseUciMove(firstMoveAsWhite);
+				} catch (Exception e) {
+				}
+				if (firstMove == null) {
+					try {
+						firstMove = boardPosition.guessMove(firstMoveAsWhite);
+					} catch (IllegalMoveFormatException e) {
+					}
+				}
+			}
+			if (firstMove == null) {
+				Random random = new Random();
+				int i = random.nextInt(100);
+				if (i >= 55) {
+					// e2e4 with 45% chance
+					firstMove = new Move(Colour.White, Figure.Pawn, Coordinate.e2, Coordinate.e4, Capture.None);
+				} else if (i >= 20) {
+					// d2d4 with 35% chance
+					firstMove = new Move(Colour.White, Figure.Pawn, Coordinate.d2, Coordinate.d4, Capture.None);
+				} else {
+					// c2c4 with 20% chance
+					firstMove = new Move(Colour.White, Figure.Pawn, Coordinate.c2, Coordinate.c4, Capture.None);
+				}
+			}
+			assert (firstMove != null);
+			moves.add(firstMove);
+		} else {
+			Move lastMove = boardPosition.getLastMove();
+			if (lastMove.getFigure().equals(Figure.Pawn) && lastMove.getTo().getRow() == 3) {
+				int column = lastMove.getTo().getColumn();
+				// immediately block opponent's pawn
+				moves.add(new Move(Colour.Black, Figure.Pawn, Coordinate.get(column, 6), Coordinate.get(column, 4),
+						Capture.None));
+			} else {
+				// evaluate several options
+				moves.add(new Move(Colour.Black, Figure.Pawn, Coordinate.e7, Coordinate.e5, Capture.None));
+				moves.add(new Move(Colour.Black, Figure.Pawn, Coordinate.d7, Coordinate.d5, Capture.None));
+				moves.add(new Move(Colour.Black, Figure.Pawn, Coordinate.c7, Coordinate.c5, Capture.None));
+				moves.add(new Move(Colour.Black, Figure.Knight, Coordinate.b8, Coordinate.c6, Capture.None));
+				moves.add(new Move(Colour.Black, Figure.Knight, Coordinate.g8, Coordinate.f6, Capture.None));
+			}
+		}
+		assert (!moves.isEmpty());
+		return moves;
+	}
+
+	@Override
+	protected Integer getCutoffDepth() {
+		// [4..6]
+		return getMaxDepth() != null ? Math.max(Math.min(4, getMaxDepth()), Math.min(6, getMaxDepth() * 6 / 10)) : null;
 	}
 
 }

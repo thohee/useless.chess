@@ -339,9 +339,7 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 		return maxDepth;
 	}
 
-	protected Integer getCutoffDepth() {
-		return getMaxDepth() != null ? Math.max(2, Math.min(5, getMaxDepth().intValue() * 6 / 10)) : null;
-	}
+	protected abstract Integer getCutoffDepth();
 
 	protected abstract boolean isQuiescent(BoardPosition boardPosition);
 

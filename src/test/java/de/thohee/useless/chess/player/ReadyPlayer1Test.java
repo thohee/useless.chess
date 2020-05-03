@@ -29,6 +29,8 @@ import de.thohee.useless.chess.board.Move;
 import de.thohee.useless.chess.board.Move.Capture;
 import de.thohee.useless.chess.board.Move.IllegalMoveFormatException;
 import de.thohee.useless.chess.board.PGNParser;
+import de.thohee.useless.chess.board.Piece;
+import de.thohee.useless.chess.board.PositionedPiece;
 
 public class ReadyPlayer1Test implements Player.OutputWriter {
 
@@ -206,5 +208,175 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 		} catch (IOException e) {
 		}
 
+	}
+
+	@Test
+	public void testEvaluateThreatsAndProtections() {
+
+		ReadyPlayer1 whitePlayer1 = new ReadyPlayer1(Colour.White, false);
+		ReadyPlayer1 blackPlayer1 = new ReadyPlayer1(Colour.Black, false);
+
+		{
+			// white queen threatens unprotected black pawn
+			BoardPosition boardPosition = BoardPosition
+					.createPosition(
+							Arrays.asList(new PositionedPiece(Coordinate.e1, new Piece(Colour.White, Figure.Queen)),
+									new PositionedPiece(Coordinate.g3, new Piece(Colour.Black, Figure.Pawn))),
+							Colour.White);
+			assertEquals(ReadyPlayer1.getValue(Figure.Pawn), whitePlayer1.evaluateThreatsAndProtections(boardPosition));
+			assertEquals(-1 * ReadyPlayer1.getValue(Figure.Pawn),
+					blackPlayer1.evaluateThreatsAndProtections(boardPosition));
+		}
+
+		{
+			// white queen threatens unprotected black knight
+			BoardPosition boardPosition = BoardPosition
+					.createPosition(
+							Arrays.asList(new PositionedPiece(Coordinate.e1, new Piece(Colour.White, Figure.Queen)),
+									new PositionedPiece(Coordinate.g3, new Piece(Colour.Black, Figure.Knight))),
+							Colour.White);
+			assertEquals(ReadyPlayer1.getValue(Figure.Knight),
+					whitePlayer1.evaluateThreatsAndProtections(boardPosition));
+			assertEquals(-1 * ReadyPlayer1.getValue(Figure.Knight),
+					blackPlayer1.evaluateThreatsAndProtections(boardPosition));
+		}
+
+		{
+			// white queen is no threat to black queen, which is protected by pawn, but is
+			// itself threatened by black queen
+			BoardPosition boardPosition = BoardPosition
+					.createPosition(
+							Arrays.asList(new PositionedPiece(Coordinate.e1, new Piece(Colour.White, Figure.Queen)),
+									new PositionedPiece(Coordinate.g3, new Piece(Colour.Black, Figure.Queen)),
+									new PositionedPiece(Coordinate.f4, new Piece(Colour.Black, Figure.Pawn))),
+							Colour.White);
+			assertEquals(-1 * ReadyPlayer1.getValue(Figure.Queen),
+					whitePlayer1.evaluateThreatsAndProtections(boardPosition));
+			assertEquals(ReadyPlayer1.getValue(Figure.Queen),
+					blackPlayer1.evaluateThreatsAndProtections(boardPosition));
+		}
+
+		{
+			// queen exchange possible with equal value loss for both sides
+			BoardPosition boardPosition = BoardPosition
+					.createPosition(
+							Arrays.asList(new PositionedPiece(Coordinate.e1, new Piece(Colour.White, Figure.Queen)),
+									new PositionedPiece(Coordinate.g3, new Piece(Colour.Black, Figure.Queen)),
+									new PositionedPiece(Coordinate.f4, new Piece(Colour.Black, Figure.Pawn)),
+									new PositionedPiece(Coordinate.a1, new Piece(Colour.White, Figure.Rook))),
+							Colour.White);
+			assertEquals(0, whitePlayer1.evaluateThreatsAndProtections(boardPosition));
+			assertEquals(0, blackPlayer1.evaluateThreatsAndProtections(boardPosition));
+		}
+
+		{
+			// the black pawn is protected by two pieces and threatened by only two pieces
+			// => no real threat
+			BoardPosition boardPosition = BoardPosition
+					.createPosition(
+							Arrays.asList(new PositionedPiece(Coordinate.e1, new Piece(Colour.White, Figure.Bishop)),
+									new PositionedPiece(Coordinate.g3, new Piece(Colour.Black, Figure.Pawn)),
+									new PositionedPiece(Coordinate.e4, new Piece(Colour.Black, Figure.Knight)),
+									new PositionedPiece(Coordinate.h1, new Piece(Colour.White, Figure.Knight)),
+									new PositionedPiece(Coordinate.g8, new Piece(Colour.Black, Figure.Rook))),
+							Colour.White);
+			assertEquals(0, whitePlayer1.evaluateThreatsAndProtections(boardPosition));
+			assertEquals(0, blackPlayer1.evaluateThreatsAndProtections(boardPosition));
+		}
+
+		{
+			// the black pawn is protected by two pieces and threatened by three pieces
+			// which will attack in ascending order of value
+			BoardPosition boardPosition = BoardPosition
+					.createPosition(
+							Arrays.asList(new PositionedPiece(Coordinate.e1, new Piece(Colour.White, Figure.Bishop)),
+									new PositionedPiece(Coordinate.g3, new Piece(Colour.Black, Figure.Pawn)),
+									new PositionedPiece(Coordinate.e4, new Piece(Colour.Black, Figure.Knight)),
+									new PositionedPiece(Coordinate.h1, new Piece(Colour.White, Figure.Knight)),
+									new PositionedPiece(Coordinate.g8, new Piece(Colour.Black, Figure.Rook)),
+									new PositionedPiece(Coordinate.a3, new Piece(Colour.White, Figure.Rook))),
+							Colour.White);
+			assertEquals(
+					ReadyPlayer1.getValue(Figure.Pawn) + ReadyPlayer1.getValue(Figure.Rook)
+							- ReadyPlayer1.getValue(Figure.Bishop),
+					whitePlayer1.evaluateThreatsAndProtections(boardPosition));
+			assertEquals(
+					-1 * (ReadyPlayer1.getValue(Figure.Pawn) + ReadyPlayer1.getValue(Figure.Rook)
+							- ReadyPlayer1.getValue(Figure.Bishop)),
+					blackPlayer1.evaluateThreatsAndProtections(boardPosition));
+		}
+
+		{
+
+			// the white pawn is protected by two pieces and threatened by three pieces
+			// which will attack in ascending order of value
+			BoardPosition boardPosition = BoardPosition
+					.createPosition(
+							Arrays.asList(new PositionedPiece(Coordinate.e1, new Piece(Colour.Black, Figure.Bishop)),
+									new PositionedPiece(Coordinate.g3, new Piece(Colour.White, Figure.Pawn)),
+									new PositionedPiece(Coordinate.e4, new Piece(Colour.White, Figure.Knight)),
+									new PositionedPiece(Coordinate.h1, new Piece(Colour.Black, Figure.Knight)),
+									new PositionedPiece(Coordinate.g8, new Piece(Colour.White, Figure.Rook)),
+									new PositionedPiece(Coordinate.a3, new Piece(Colour.Black, Figure.Rook))),
+							Colour.White);
+			assertEquals(
+					-1 * (ReadyPlayer1.getValue(Figure.Pawn) + ReadyPlayer1.getValue(Figure.Rook)
+							- ReadyPlayer1.getValue(Figure.Bishop)),
+					whitePlayer1.evaluateThreatsAndProtections(boardPosition));
+			assertEquals(
+					ReadyPlayer1.getValue(Figure.Pawn) + ReadyPlayer1.getValue(Figure.Rook)
+							- ReadyPlayer1.getValue(Figure.Bishop),
+					blackPlayer1.evaluateThreatsAndProtections(boardPosition));
+		}
+
+		{
+
+			// the white pawn is protected by two pieces and threatened by three pieces
+			// in addition, the second white pawn is threatened by the second black knight
+			BoardPosition boardPosition = BoardPosition
+					.createPosition(
+							Arrays.asList(new PositionedPiece(Coordinate.e1, new Piece(Colour.Black, Figure.Bishop)),
+									new PositionedPiece(Coordinate.g3, new Piece(Colour.White, Figure.Pawn)),
+									new PositionedPiece(Coordinate.e4, new Piece(Colour.White, Figure.Knight)),
+									new PositionedPiece(Coordinate.h1, new Piece(Colour.Black, Figure.Knight)),
+									new PositionedPiece(Coordinate.g8, new Piece(Colour.White, Figure.Rook)),
+									new PositionedPiece(Coordinate.a3, new Piece(Colour.Black, Figure.Rook)),
+									new PositionedPiece(Coordinate.d7, new Piece(Colour.White, Figure.Pawn)),
+									new PositionedPiece(Coordinate.b6, new Piece(Colour.Black, Figure.Knight))),
+							Colour.White);
+			assertEquals(
+					-1 * (ReadyPlayer1.getValue(Figure.Pawn) + ReadyPlayer1.getValue(Figure.Rook)
+							- ReadyPlayer1.getValue(Figure.Bishop) + ReadyPlayer1.getValue(Figure.Pawn)),
+					whitePlayer1.evaluateThreatsAndProtections(boardPosition));
+			assertEquals(
+					ReadyPlayer1.getValue(Figure.Pawn) + ReadyPlayer1.getValue(Figure.Rook)
+							- ReadyPlayer1.getValue(Figure.Bishop) + ReadyPlayer1.getValue(Figure.Pawn),
+					blackPlayer1.evaluateThreatsAndProtections(boardPosition));
+		}
+
+		{
+
+			// the white pawn is protected by two pieces and threatened by three pieces
+			// in addition, the black pawn is threatened by the second white knight
+			BoardPosition boardPosition = BoardPosition
+					.createPosition(
+							Arrays.asList(new PositionedPiece(Coordinate.e1, new Piece(Colour.Black, Figure.Bishop)),
+									new PositionedPiece(Coordinate.g3, new Piece(Colour.White, Figure.Pawn)),
+									new PositionedPiece(Coordinate.e4, new Piece(Colour.White, Figure.Knight)),
+									new PositionedPiece(Coordinate.h1, new Piece(Colour.Black, Figure.Knight)),
+									new PositionedPiece(Coordinate.g8, new Piece(Colour.White, Figure.Rook)),
+									new PositionedPiece(Coordinate.a3, new Piece(Colour.Black, Figure.Rook)),
+									new PositionedPiece(Coordinate.d7, new Piece(Colour.Black, Figure.Pawn)),
+									new PositionedPiece(Coordinate.b6, new Piece(Colour.White, Figure.Knight))),
+							Colour.White);
+			assertEquals(
+					-1 * (ReadyPlayer1.getValue(Figure.Pawn) + ReadyPlayer1.getValue(Figure.Rook)
+							- ReadyPlayer1.getValue(Figure.Bishop) - ReadyPlayer1.getValue(Figure.Pawn)),
+					whitePlayer1.evaluateThreatsAndProtections(boardPosition));
+			assertEquals(
+					ReadyPlayer1.getValue(Figure.Pawn) + ReadyPlayer1.getValue(Figure.Rook)
+							- ReadyPlayer1.getValue(Figure.Bishop) - ReadyPlayer1.getValue(Figure.Pawn),
+					blackPlayer1.evaluateThreatsAndProtections(boardPosition));
+		}
 	}
 }

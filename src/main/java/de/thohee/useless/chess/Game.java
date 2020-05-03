@@ -11,9 +11,9 @@ import java.util.Scanner;
 import de.thohee.useless.chess.board.BoardPosition;
 import de.thohee.useless.chess.board.Colour;
 import de.thohee.useless.chess.board.Move;
-import de.thohee.useless.chess.player.ReadyPlayer1;
 import de.thohee.useless.chess.player.Player;
 import de.thohee.useless.chess.player.RandomPlayer;
+import de.thohee.useless.chess.player.ReadyPlayer1;
 
 public class Game implements Player.OutputWriter {
 
@@ -64,10 +64,16 @@ public class Game implements Player.OutputWriter {
 		Object[] constructorParameters;
 	}
 
+	// TODO: determine player class, parameter types and constructor automatically
+	// using reflection
 	static PlayerConfiguration createPlayerConfiguration(String classSimpleName, Object... additionalParams)
 			throws Exception {
 		if (ReadyPlayer1.class.getSimpleName().equals(classSimpleName)) {
-			return createPlayerConfiguration(ReadyPlayer1.class, true);
+			if (additionalParams.length == 0) {
+				return createPlayerConfiguration(ReadyPlayer1.class, true);
+			} else {
+				return createPlayerConfiguration(ReadyPlayer1.class, true, additionalParams[0]);
+			}
 		} else if (RandomPlayer.class.getSimpleName().equals(classSimpleName)) {
 			return createPlayerConfiguration(RandomPlayer.class, additionalParams);
 		} else {
