@@ -54,6 +54,8 @@ public class BoardPosition {
 
 	private ChessBoard board = null;
 	private Set<Piece> castlingPieces = null;
+	private boolean[] hasCastled = new boolean[] { false, false };
+	private ArrayList<Move> performedMoves = new ArrayList<>();
 	private Move lastMove = null;
 	private BoardPosition predecessor = null;
 	private int movesWithoutPawnAndCapture = 0;
@@ -256,6 +258,11 @@ public class BoardPosition {
 			}
 			break;
 		}
+		boardPosition.hasCastled[colour.ordinal()] = true;
+	}
+
+	public boolean hasCastled(Colour colour) {
+		return hasCastled[colour.ordinal()];
 	}
 
 	private boolean allEmpty(int row, List<Integer> columns) {
@@ -616,6 +623,10 @@ public class BoardPosition {
 		return allPossibleMoves;
 	}
 
+	public BoardPosition getPredecessor() {
+		return predecessor;
+	}
+
 	private Stack<Move> performedMoves() {
 		Stack<Move> moveStack = new Stack<>();
 		if (lastMove == null) {
@@ -629,7 +640,7 @@ public class BoardPosition {
 		return moveStack;
 	}
 
-	public List<Move> getPerformedMoves() {
+	private List<Move> getPerformedMoves() {
 		Stack<Move> moveStack = performedMoves();
 		List<Move> moves = new ArrayList<>(moveStack.size());
 		while (!moveStack.isEmpty()) {

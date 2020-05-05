@@ -3,6 +3,7 @@ package de.thohee.useless.chess.player;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Random;
@@ -22,7 +23,7 @@ import de.thohee.useless.chess.board.PositionedPiece;
 public class ReadyPlayer1 extends MinimaxPlayer {
 
 	private String firstMoveAsWhite = null;
-	private boolean openings = false;
+	private boolean openings = true;
 
 	public ReadyPlayer1(Colour colour) {
 		super(colour, true);
@@ -55,15 +56,7 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			result.add(evaluateMaterial(boardPosition));
 			result.add(evaluateThreatsAndProtections(boardPosition));
 			result.add(evaluateOpeningMidgameTacticsAndEndgame(boardPosition));
-//			result.add(evaluatePawnByPawnProtections(boardPosition));
 		}
-
-		List<Move> moves = boardPosition.getPerformedMoves();
-		int n = moves.size() - 1;
-		if (n > 0) {
-			writeLine(moves.get(n - 1).asUciMove() + " " + moves.get(n).asUciMove() + " " + result.toString());
-		}
-
 		return result;
 	}
 
@@ -168,8 +161,165 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 	}
 
 	private Integer evaluateOpeningMidgameTacticsAndEndgame(BoardPosition boardPosition) {
-		// TODO
-		return 0;
+		return evaluateOpening(boardPosition);
+	}
+
+	private int getCastlingOptions(BoardPosition boardPosition, Colour colour) {
+		boolean king = false;
+		int numberOfRooks = 0;
+		for (Piece piece : boardPosition.getCastlingPieces()) {
+			if (piece.getColour().equals(colour)) {
+				if (piece.getFigure().equals(Figure.King)) {
+					king = true;
+				} else {
+					++numberOfRooks;
+				}
+			}
+		}
+		if (!king) {
+			return 0;
+		} else {
+			return numberOfRooks;
+		}
+	}
+
+	private int whiteOrBlackRow(int whiteRow) {
+		if (getColour().equals(Colour.Black)) {
+			return 7 - whiteRow;
+		} else {
+			return whiteRow;
+		}
+	}
+
+	private boolean hasOwnFigure(BoardPosition boardPosition, Coordinate coordinate, Figure figure) {
+		Piece piece = boardPosition.get(coordinate);
+		return piece != null && piece.getFigure().equals(figure) && piece.getColour().equals(getColour());
+	}
+
+	private boolean rooksAreConnected(BoardPosition boardPosition) {
+		if (boardPosition.hasCastled(getColour())) {
+			int backRank = whiteOrBlackRow(0);
+			for (int c = 0; c < 8; ++c) {
+				Piece piece = boardPosition.get(Coordinate.get(c, backRank));
+				if (piece != null && (!piece.getColour().equals(getColour())
+						|| (!piece.getFigure().equals(Figure.Rook) && !piece.getFigure().equals(Figure.King)))) {
+					return false;
+				}
+			}
+			return true;
+		} else {
+			return false;
+		}
+	}
+
+	private Integer evaluateOpening(BoardPosition boardPosition) {
+		if (boardPosition.getDepth() <= 20) {
+			final Colour ownColour = getColour();
+			int value = 0;
+
+			boolean rooksAreConnected = rooksAreConnected(boardPosition);
+			if (rooksAreConnected) {
+				return value;
+			} else {
+				value -= 20 - boardPosition.getDepth();
+			}
+
+			// 1. occupy center
+			int centerRow = whiteOrBlackRow(3);
+			if (boardPosition.getDepth() >= 4 && !hasOwnFigure(boardPosition, Coordinate.get(3, centerRow), Figure.Pawn)
+					&& !hasOwnFigure(boardPosition, Coordinate.get(4, centerRow), Figure.Pawn)) {
+				value -= 30;
+			}
+
+			// 2. develop minor pieces
+			int backRank = whiteOrBlackRow(0);
+			int undevelopedMinorPieces = 0;
+			if (boardPosition.getDepth() >= 4) {
+				if (hasOwnFigure(boardPosition, Coordinate.get(1, backRank), Figure.Knight)) {
+					++undevelopedMinorPieces;
+				}
+				if (hasOwnFigure(boardPosition, Coordinate.get(2, backRank), Figure.Bishop)) {
+					++undevelopedMinorPieces;
+				}
+				if (hasOwnFigure(boardPosition, Coordinate.get(5, backRank), Figure.Bishop)) {
+					++undevelopedMinorPieces;
+				}
+				if (hasOwnFigure(boardPosition, Coordinate.get(6, backRank), Figure.Knight)) {
+					++undevelopedMinorPieces;
+				}
+				value -= 2 * undevelopedMinorPieces;
+			}
+
+			// 3. perform castling
+			if (!boardPosition.hasCastled(ownColour)) {
+				int castlingOptions = getCastlingOptions(boardPosition, ownColour);
+				if (castlingOptions == 0) {
+					// we already destroyed the option to castle
+					value -= 30;
+				} else if (castlingOptions == 1) {
+					value -= 15;
+				} else if (boardPosition.getDepth() >= 8) {
+					// do not castle too late
+					value -= boardPosition.getDepth() - 8;
+				}
+			}
+
+			// 4. control center
+			int threatsAndProtectionsInCenter = 0;
+			for (int r = 3; r <= 4; ++r) {
+				for (int c = 3; c <= 4; ++c) {
+					Coordinate coordinate = Coordinate.get(c, r);
+					threatsAndProtectionsInCenter += boardPosition.getThreatsTo(ownColour.opposite(), coordinate)
+							.size();
+					Piece piece = boardPosition.get(coordinate);
+					if (piece != null && piece.getColour().equals(ownColour)) {
+						threatsAndProtectionsInCenter += boardPosition.getProtections(coordinate).size();
+					}
+				}
+			}
+			value += threatsAndProtectionsInCenter;
+			// knight on the rim is dim
+			int beforePawnsRow = whiteOrBlackRow(2);
+			if (hasOwnFigure(boardPosition, Coordinate.get(0, beforePawnsRow), Figure.Knight)) {
+				value -= 5;
+			}
+			if (hasOwnFigure(boardPosition, Coordinate.get(7, beforePawnsRow), Figure.Knight)) {
+				value -= 5;
+			}
+
+			// 5. do not move any piece twice
+			if (boardPosition.getDepth() <= 12) {
+				int repeatedMoves = 0;
+				Set<Piece> movedPieces = new HashSet<>();
+				BoardPosition bp = boardPosition;
+				while (bp != null) {
+					Move lastMove = bp.getLastMove();
+					if (lastMove != null && lastMove.getColour().equals(ownColour) && lastMove.getCastling() == null) {
+						Piece piece = bp.get(lastMove.getTo());
+						if (movedPieces.contains(piece)) {
+							++repeatedMoves;
+						}
+						movedPieces.add(piece);
+					}
+					bp = bp.getPredecessor();
+				}
+				value -= repeatedMoves;
+			}
+
+			// 6. do not develop the queen too early
+			if (undevelopedMinorPieces > 0 && boardPosition.getDepth() <= 14) {
+				Piece queen = boardPosition.get(Coordinate.get(3, backRank));
+				if (queen == null) {
+					value -= 14 - boardPosition.getDepth();
+				}
+			}
+
+			// 7. react to opponent's threats (covered by evaluateThreatsAndProtections)
+
+			return value;
+		} else {
+			return 0;
+		}
 	}
 
 	@SuppressWarnings("unused")
@@ -261,11 +411,13 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 				try {
 					firstMove = boardPosition.parseUciMove(firstMoveAsWhite);
 				} catch (Exception e) {
+					writeLine(e.getMessage());
 				}
 				if (firstMove == null) {
 					try {
 						firstMove = boardPosition.guessMove(firstMoveAsWhite);
 					} catch (IllegalMoveFormatException e) {
+						writeLine(e.getMessage());
 					}
 				}
 			}

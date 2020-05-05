@@ -1,0 +1,81 @@
+[Event "Computer chess game"]
+[Site "THOMAS-PC"]
+[Date "2020.05.04"]
+[Round "?"]
+[White "Thomas"]
+[Black "useless.chess ReadyPlayer1"]
+[Result "0-1"]
+[BlackElo "2000"]
+[ECO "C46"]
+[Opening "Three Knights Game"]
+[Time "22:46:28"]
+[Variation "2...Nc6"]
+[WhiteElo "2400"]
+[Termination "normal"]
+[PlyCount "114"]
+[WhiteType "human"]
+[BlackType "program"]
+
+1. e4 e5 2. Nc3 Nc6 3. Nf3 Bd6 4. Bc4 a6 5. O-O Rb8 6. d3 b6 7. Ng5 Nh6 8.
+Qf3 f6 9. Nh3 b5 10. Bd5 b4 11. Na4 Nd4 12. Qh5+ g6 13. Qxh6 Nxc2 14. Rb1
+Rb5 15. Qg7 Rf8 16. Qxh7 g5 17. Qg6+ Ke7 18. Qg7+ Ke8 19. b3 a5 20. Rb2 Na3
+21. Be3 c6 22. Bc4 Nxc4 23. bxc4 Rb7 24. Bc5 Bxc5 25. Nxc5 Ra7 26. Qg6+ Ke7
+27. Nb3 a4 28. Nd2 Rb7 29. Rfb1 c5 30. Qf5 a3 31. Rc2 Ra7 32. Nb3 Rc7 33.
+d4 cxd4 34. Rd1 Rb7 35. g3 Ra7 36. f4 d6 37. fxg5 Bxf5 38. exf5 fxg5 39.
+Nxg5 Rxf5 40. Ne4 Rb7 41. c5 dxc5 42. Nexc5 Ra7 43. Rf1 Rxf1+ 44. Kxf1 Rc7
+45. Rf2 Qd5 46. Nd3 Qh1+ 47. Ke2 Rc2+ 48. Nd2 Qe4+ 49. Kd1 Qxd3 50. Rf3
+Rxd2+ 51. Ke1 Re2+ 52. Kf1 Qxf3+ 53. Kg1 Rxa2 54. g4 Qxg4+ 55. Kf1 Rxh2 56.
+Ke1 a2 57. Kf1 a1=Q# 0-1
+
+[Event "Computer chess game"]
+[Site "THOMAS-PC"]
+[Date "2020.05.04"]
+[Round "?"]
+[White "Thomas"]
+[Black "useless.chess ReadyPlayer1"]
+[Result "0-1"]
+[BlackElo "2000"]
+[Time "11:30:42"]
+[WhiteElo "2400"]
+[Termination "normal"]
+[PlyCount "114"]
+[WhiteType "human"]
+[BlackType "program"]
+
+1. e4 e5 2. Nc3 Nc6 3. Nf3 Bd6 4. Bc4 a6 5. O-O Rb8 6. d3 b6 7. Ng5 Nh6 8.
+Qf3 f6 9. Nh3 b5 10. Bd5 b4 11. Na4 Nd4 12. Qh5+ g6 13. Qxh6 Nxc2 14. Rb1
+Rb5 15. Qg7 Rf8 16. Qxh7 g5 17. Qg6+ Ke7 18. Qg7+ Ke8 19. b3 a5 20. Rb2 Na3
+21. Be3 c6 22. Bc4 Nxc4 23. bxc4 Rb7 24. Bc5 Bxc5 25. Nxc5 Ra7 26. Qg6+ Ke7
+27. Nb3 a4 28. Nd2 Rb7 29. Rfb1 c5 30. Qf5 a3 31. Rc2 Ra7 32. Nb3 Rc7 33.
+d4 cxd4 34. Rd1 Rb7 35. g3 Ra7 36. f4 d6 37. fxg5 Bxf5 38. exf5 fxg5 39.
+Nxg5 Rxf5 40. Ne4 Rb7 41. c5 dxc5 42. Nexc5 Ra7 43. Rf1 Rxf1+ 44. Kxf1 Rc7
+45. Rf2 Qd5 46. Nd3 Qh1+ 47. Ke2 Rc2+ 48. Nd2 Qe4+ 49. Kd1 Qxd3 50. Rf3
+Rxd2+ 51. Ke1 Re2+ 52. Kf1 Qxf3+ 53. Kg1 Rxa2 54. g4 Qxg4+ 55. Kf1 Rxh2 56.
+Ke1 a2 57. Kf1 a1=Q# 0-1
+
+[Event "Computer chess game"]
+[Site "THOMAS-PC"]
+[Date "2020.05.04"]
+[Round "?"]
+[White "Thomas"]
+[Black "useless.chess ReadyPlayer1"]
+[Result "0-1"]
+[BlackElo "2000"]
+[Time "12:04:19"]
+[WhiteElo "2400"]
+[Termination "normal"]
+[PlyCount "114"]
+[WhiteType "human"]
+[BlackType "program"]
+
+1. e4 e5 2. Nc3 Nc6 3. Nf3 Bd6 4. Bc4 a6 5. O-O Rb8 6. d3 b6 7. Ng5 Nh6 8.
+Qf3 f6 9. Nh3 b5 10. Bd5 b4 11. Na4 Nd4 12. Qh5+ g6 13. Qxh6 Nxc2 14. Rb1
+Rb5 15. Qg7 Rf8 16. Qxh7 g5 17. Qg6+ Ke7 18. Qg7+ Ke8 19. b3 a5 20. Rb2 Na3
+21. Be3 c6 22. Bc4 Nxc4 23. bxc4 Rb7 24. Bc5 Bxc5 25. Nxc5 Ra7 26. Qg6+ Ke7
+27. Nb3 a4 28. Nd2 Rb7 29. Rfb1 c5 30. Qf5 a3 31. Rc2 Ra7 32. Nb3 Rc7 33.
+d4 cxd4 34. Rd1 Rb7 35. g3 Ra7 36. f4 d6 37. fxg5 Bxf5 38. exf5 fxg5 39.
+Nxg5 Rxf5 40. Ne4 Rb7 41. c5 dxc5 42. Nexc5 Ra7 43. Rf1 Rxf1+ 44. Kxf1 Rc7
+45. Rf2 Qd5 46. Nd3 Qh1+ 47. Ke2 Rc2+ 48. Nd2 Qe4+ 49. Kd1 Qxd3 50. Rf3
+Rxd2+ 51. Ke1 Re2+ 52. Kf1 Qxf3+ 53. Kg1 Rxa2 54. g4 Qxg4+ 55. Kf1 Rxh2 56.
+Ke1 a2 57. Kf1 a1=Q# 0-1
+
