@@ -31,6 +31,7 @@ import de.thohee.useless.chess.board.Move.IllegalMoveFormatException;
 import de.thohee.useless.chess.board.PGNParser;
 import de.thohee.useless.chess.board.Piece;
 import de.thohee.useless.chess.board.PositionedPiece;
+import de.thohee.useless.chess.player.Player.Params;
 
 public class ReadyPlayer1Test implements Player.OutputWriter {
 
@@ -45,18 +46,24 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 		}
 	}
 
-	@Test
-	public void testAvoidCheckmateIn4Plies() throws Exception {
-		File pgnFile = new File("src/test/resources/games/SiegEnduringSilver.pgn");
+	private BoardPosition loadPosition(String gameFilename, int plies)
+			throws FileNotFoundException, IllegalMoveFormatException {
+		File pgnFile = new File("src/test/resources/games/" + gameFilename);
 		assertTrue(pgnFile.exists() && pgnFile.isFile());
 		List<GameReport> games = PGNParser.parse(pgnFile.getPath());
 		assertEquals(1, games.size());
 		GameReport gameReport = games.get(0);
 		BoardPosition boardPosition = BoardPosition.getInitialPosition();
-		for (int m = 0; m < 12; ++m) {
+		for (int m = 0; m < plies; ++m) {
 			Move move = gameReport.getMoves().get(m);
 			boardPosition = boardPosition.performMove(move);
 		}
+		return boardPosition;
+	}
+
+	@Test
+	public void testAvoidCheckmateIn4Plies() throws Exception {
+		BoardPosition boardPosition = loadPosition("SiegEnduringSilver.pgn", 12);
 		ReadyPlayer1 player = new ReadyPlayer1(boardPosition.getColourToMove(), false);
 		Player.Params params = new Player.Params();
 		params.maxDepthInPlies = 4;
@@ -87,16 +94,7 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 
 	@Test
 	public void testDetectLoomingCheckMate() throws Exception {
-		File pgnFile = new File("src/test/resources/games/SiegEnduringSilver.pgn");
-		assertTrue(pgnFile.exists() && pgnFile.isFile());
-		List<GameReport> games = PGNParser.parse(pgnFile.getPath());
-		assertEquals(1, games.size());
-		GameReport gameReport = games.get(0);
-		BoardPosition boardPosition = BoardPosition.getInitialPosition();
-		for (int m = 0; m < 14; ++m) {
-			Move move = gameReport.getMoves().get(m);
-			boardPosition = boardPosition.performMove(move);
-		}
+		BoardPosition boardPosition = loadPosition("SiegEnduringSilver.pgn", 14);
 		Set<Move> avoidingMoves = new HashSet<>();
 		avoidingMoves.add(boardPosition.parseUciMove("g1h3"));
 		avoidingMoves.add(boardPosition.parseUciMove("d1c2"));
@@ -176,17 +174,7 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 		Player.Params params = new Player.Params();
 		params.maxDepthInPlies = 5;
 		ReadyPlayer1 player = new ReadyPlayer1(Colour.Black, true);
-
-		File pgnFile = new File("src/test/resources/games/DrawAgainstRandomPlayer2.pgn");
-		assertTrue(pgnFile.exists() && pgnFile.isFile());
-		List<GameReport> games = PGNParser.parse(pgnFile.getPath());
-		assertEquals(1, games.size());
-		GameReport gameReport = games.get(0);
-		BoardPosition boardPosition = BoardPosition.getInitialPosition();
-		for (int m = 0; m < 101; ++m) {
-			Move move = gameReport.getMoves().get(m);
-			boardPosition = boardPosition.performMove(move);
-		}
+		BoardPosition boardPosition = loadPosition("DrawAgainstRandomPlayer2.pgn", 101);
 		Move unexpectedMove = boardPosition.getMove(Coordinate.a2, Coordinate.b1);
 		Move move = player.makeMove(boardPosition, params);
 		player.printEvaluatedChoices(System.out);
@@ -378,5 +366,26 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 							- ReadyPlayer1.getValue(Figure.Bishop) - ReadyPlayer1.getValue(Figure.Pawn),
 					blackPlayer1.evaluateThreatsAndProtections(boardPosition));
 		}
+	}
+
+	@Test
+	public void testEvaluateOpenings() throws Exception {
+		BoardPosition boardPosition = loadPosition("ThomasWinsAgainstReadyPlayer1.pgn", 13);
+		ReadyPlayer1 player = new ReadyPlayer1(Colour.Black, true);
+		player.setDebug();
+
+		BoardPosition a8a7 = boardPosition.performMove(boardPosition.parseUciMove("a8a7"));
+		BoardPosition f8e7 = boardPosition.performMove(boardPosition.parseUciMove("f8e7"));
+		BoardPosition d8d7 = boardPosition.performMove(boardPosition.parseUciMove("d8d7"));
+
+		System.out.println("a8a7: " + player.evaluateOpening(a8a7));
+		System.out.println("f8e7: " + player.evaluateOpening(f8e7));
+		System.out.println("d8d7: " + player.evaluateOpening(d8d7));
+
+		Params params = new Player.Params();
+		params.maxDepthInPlies = 5;
+		player.makeMove(boardPosition, params);
+		player.printEvaluatedChoices(System.out);
+
 	}
 }

@@ -1,0 +1,29 @@
+[Event "second.at"]
+[Site "DESKTOP-IE1N39L"]
+[Date "2020.05.06"]
+[Round "2"]
+[White "SystemOne"]
+[Black "Useless.chess-1.0-SNAPSHOT"]
+[Result "1/2-1/2"]
+[BlackElo "2200"]
+[ECO "C40"]
+[Opening "Offene Partie"]
+[Time "09:53:26"]
+[Variation "Damiano Verteidigung"]
+[WhiteElo "2200"]
+[Termination "normal"]
+[PlyCount "113"]
+[WhiteType "program"]
+[BlackType "program"]
+
+1. e4 e5 2. Nf3 f6 3. Bc4 d6 4. O-O c5 5. Bb5+ Ke7 6. Nc3 b6 7. Nd5+ Ke6 8.
+c4 g6 9. d3 Bg7 10. Be3 Kf7 11. Rb1 Ke6 12. Nc3 Ne7 13. Kh1 Qc7 14. Rg1 Qb7
+15. Qa4 Rg8 16. Ra1 Bh8 17. a3 Rg7 18. b3 Rg8 19. Rgb1 Rg7 20. Bd2 Rg8 21.
+Be3 Rg7 22. Rb2 Rg8 23. Rd2 Rg7 24. Rg1 Rg8 25. Ne2 Rg7 26. Ng3 Rg8 27.
+Rdd1 Rg7 28. Rde1 Rg8 29. Ref1 Rg7 30. h3 Rg8 31. Re1 Rg7 32. Ra1 Rg8 33.
+Ne2 Rg7 34. Rad1 Rg8 35. Rdf1 Rg7 36. Bd2 Rg8 37. g3 Rg7 38. Be3 Rg8 39.
+Rg2 Rg7 40. Rc1 Rg8 41. Re1 Rg7 42. Reg1 Rg8 43. Ra1 Rg7 44. Rf1 Rg8 45.
+Rc1 Rg7 46. Rf1 Rg8 47. Nd2 Rg7 48. Rc1 Rg8 49. Ra1 Rg7 50. Rf1 Rg8 51. Rd1
+Rg7 52. Rb1 Rg8 53. Nf3 Rg7 54. Rd1 Rg8 55. Rb1 Rg7 56. Rc1 Rg8 57. Rb1
+{Stellungswiederholung} 1/2-1/2
+

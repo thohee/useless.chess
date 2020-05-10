@@ -22,6 +22,8 @@ import de.thohee.useless.chess.board.Move;
  */
 public abstract class MinimaxPlayer extends EnginePlayer {
 
+	private boolean debug = false;
+
 	private OutputWriter outputWriter = null;
 
 	private TranspositionTable transpositionTable = null;
@@ -47,7 +49,11 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 		this.outputWriter = outputWriter;
 	}
 
-	private class GameState {
+	public void setDebug() {
+		debug = true;
+	}
+
+	protected class GameState {
 
 		private BoardPosition boardPosition;
 
@@ -59,7 +65,7 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 			this.boardPosition = boardPosition;
 		}
 
-		private GameState createSuccessorState(Move move) {
+		protected GameState createSuccessorState(Move move) {
 			GameState successor = new GameState(this.boardPosition.justPerformMove(move));
 			successor.depth = this.depth + 1;
 			return successor;
@@ -83,9 +89,7 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 
 	}
 
-	private List<GameState> previouslyEvaluatedMoves = null;
-
-	private TreeSet<GameState> evaluatedMoves = new TreeSet<>(new Comparator<GameState>() {
+	protected class GameStateComparator implements Comparator<GameState> {
 		@Override
 		public int compare(GameState gameState1, GameState gameState2) {
 			// sorted by descending value
@@ -102,7 +106,11 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 			}
 			return cmp;
 		}
-	});
+	}
+
+	private List<GameState> previouslyEvaluatedMoves = null;
+
+	private TreeSet<GameState> evaluatedMoves = new TreeSet<>(new GameStateComparator());
 
 	protected class InterruptedException extends Exception {
 		private static final long serialVersionUID = 11135510449244745L;
@@ -215,12 +223,13 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 				assert (result != null);
 			} else if (terminalTest(gameState)) {
 				result = evaluate(gameState.getBoardPosition());
+				if (debug) {
+					result.setBoardPosition(gameState.getBoardPosition());
+				}
 			} else {
 				Value v = getMin();
-				List<Move> possibleMoves = getPossibleMoves(gameState.getBoardPosition());
 				boolean atLeastOneValid = false;
-				for (Move move : possibleMoves) {
-					GameState successor = gameState.createSuccessorState(move);
+				for (GameState successor : getSuccessors(gameState)) {
 					Value m = minValue(successor, alpha, beta);
 					if (m.isInvalid()) {
 						continue;
@@ -263,12 +272,13 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 				assert (result != null);
 			} else if (terminalTest(gameState)) {
 				result = evaluate(gameState.getBoardPosition());
+				if (debug) {
+					result.setBoardPosition(gameState.getBoardPosition());
+				}
 			} else {
 				Value v = getMax();
-				List<Move> possibleMoves = getPossibleMoves(gameState.getBoardPosition());
 				boolean atLeastOneValid = false;
-				for (Move move : possibleMoves) {
-					GameState successor = gameState.createSuccessorState(move);
+				for (GameState successor : getSuccessors(gameState)) {
 					Value m = maxValue(successor, alpha, beta);
 					if (m.isInvalid()) {
 						continue;
@@ -312,8 +322,16 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 				? previouslyEvaluatedMoves
 				: evaluatedMoves;
 		for (GameState gameState : col) {
-			printStream.println(
-					gameState.getBoardPosition().getLastMove().asUciMove() + " " + gameState.getValue().toString());
+			if (debug) {
+				assert (gameState.getValue().getBoardPosition() != null);
+				List<Move> performedMoves = gameState.getValue().getBoardPosition().getPerformedMoves();
+				printStream.println(Move.toString(performedMoves.subList(
+						gameState.getBoardPosition().getPerformedMoves().size() - 1, performedMoves.size()), false));
+				printStream.println(gameState.getValue().getBoardPosition().toString());
+			} else {
+				printStream.println(
+						gameState.getBoardPosition().getLastMove().asUciMove() + " " + gameState.getValue().toString());
+			}
 		}
 		printStream.println();
 	}
@@ -343,5 +361,5 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 
 	protected abstract boolean isQuiescent(BoardPosition boardPosition);
 
-	protected abstract List<Move> getPossibleMoves(BoardPosition boardPosition);
+	protected abstract List<GameState> getSuccessors(GameState gameState);
 }

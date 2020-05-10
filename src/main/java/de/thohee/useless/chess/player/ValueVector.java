@@ -2,6 +2,8 @@ package de.thohee.useless.chess.player;
 
 import java.util.ArrayList;
 
+import de.thohee.useless.chess.board.BoardPosition;
+
 class ValueVector extends ArrayList<Integer> implements Value {
 	private static final long serialVersionUID = 5403861563080301920L;
 
@@ -12,6 +14,8 @@ class ValueVector extends ArrayList<Integer> implements Value {
 	private boolean min = false;
 	private boolean max = false;
 	private boolean invalid = false;
+
+	private BoardPosition boardPosition = null;
 
 	private ValueVector setMax() {
 		this.max = true;
@@ -26,6 +30,16 @@ class ValueVector extends ArrayList<Integer> implements Value {
 	private ValueVector setInvalid() {
 		this.invalid = true;
 		return this;
+	}
+
+	@Override
+	public BoardPosition getBoardPosition() {
+		return boardPosition;
+	}
+
+	@Override
+	public void setBoardPosition(BoardPosition boardPosition) {
+		this.boardPosition = boardPosition;
 	}
 
 	// Not representing the minimum and maximum vectors by actual vectors of fixed

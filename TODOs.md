@@ -1,4 +1,5 @@
 # TODOs
+* compute and fully evaluate all successor GameStates after first move, and order moves accordingly.
 * do not give chess to opponent using valuable piece, if it can be beaten right away -> unit test
 * make king moves - except castlings - less probable
     * in particular, try to castle within first 10 moves, and hence do not move king or rook before doing so, unless absolutely necessary

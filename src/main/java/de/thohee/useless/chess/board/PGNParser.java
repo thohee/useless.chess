@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 import java.util.stream.Collectors;
 
@@ -100,6 +101,26 @@ public class PGNParser {
 		}
 	}
 
+	private static String next(Scanner moveScanner) {
+		String token = moveScanner.next();
+		while (token.isEmpty() || token.endsWith(".")) {
+			token = next(moveScanner);
+		}
+		if (token.startsWith("{")) {
+			while (!token.contains("}") && moveScanner.hasNext()) {
+				token = moveScanner.next();
+			}
+			token = next(moveScanner);
+		}
+		try {
+			Integer.parseInt(token);
+			token = next(moveScanner);
+		} catch (NumberFormatException e) {
+
+		}
+		return token;
+	}
+
 	public static List<GameReport> parse(String filename) throws IllegalMoveFormatException, FileNotFoundException {
 		List<GameReport> reports = new LinkedList<>();
 		Scanner scanner = new Scanner(new File(filename));
@@ -145,36 +166,21 @@ public class PGNParser {
 				}
 				Scanner moveScanner = new Scanner(line);
 				moveScanner.useDelimiter("[\\.\\ ]");
-				while (moveScanner.hasNext()) {
-					String token = moveScanner.next();
-					if (token.isEmpty()) {
-						continue;
-					} else if (token.startsWith("{")) {
-						while (!token.contains("}") && moveScanner.hasNext()) {
-							token = moveScanner.next();
+				try {
+					while (moveScanner.hasNext()) {
+						String token = next(moveScanner);
+						Move moveWhite = parseMove(boardPosition, token);
+						current.add(moveWhite);
+						boardPosition = boardPosition.performMove(moveWhite);
+						if (moveScanner.hasNext()) {
+							token = next(moveScanner);
+							Move moveBlack = parseMove(boardPosition, token);
+							current.add(moveBlack);
+							boardPosition = boardPosition.performMove(moveBlack);
 						}
-						if (!moveScanner.hasNext()) {
-							break;
-						}
-						token = moveScanner.next();
 					}
-					try {
-						Integer.parseInt(token);
-						continue;
-					} catch (NumberFormatException e) {
-					}
-					Move moveWhite = parseMove(boardPosition, token);
-					current.add(moveWhite);
-					boardPosition = boardPosition.performMove(moveWhite);
-					if (moveScanner.hasNext()) {
-						token = moveScanner.next();
-						if (token.isEmpty()) {
-							continue;
-						}
-						Move moveBlack = parseMove(boardPosition, token);
-						current.add(moveBlack);
-						boardPosition = boardPosition.performMove(moveBlack);
-					}
+				} catch (NoSuchElementException e) {
+
 				}
 				moveScanner.close();
 			}

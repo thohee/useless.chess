@@ -640,7 +640,7 @@ public class BoardPosition {
 		return moveStack;
 	}
 
-	private List<Move> getPerformedMoves() {
+	public List<Move> getPerformedMoves() {
 		Stack<Move> moveStack = performedMoves();
 		List<Move> moves = new ArrayList<>(moveStack.size());
 		while (!moveStack.isEmpty()) {

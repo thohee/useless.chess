@@ -212,7 +212,7 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 		}
 	}
 
-	private Integer evaluateOpening(BoardPosition boardPosition) {
+	Integer evaluateOpening(BoardPosition boardPosition) {
 		if (boardPosition.getDepth() <= 20) {
 			final Colour ownColour = getColour();
 			int value = 0;
@@ -307,12 +307,14 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			}
 
 			// 6. do not develop the queen too early
-			if (undevelopedMinorPieces > 0 && boardPosition.getDepth() <= 14) {
-				Piece queen = boardPosition.get(Coordinate.get(3, backRank));
-				if (queen == null) {
-					value -= 14 - boardPosition.getDepth();
-				}
-			}
+			// implicitly achieved by keeping the castling options and forcing to develop
+			// the minor pieces
+//			if (undevelopedMinorPieces > 0 && boardPosition.getDepth() <= 14) {
+//				Piece queen = boardPosition.get(Coordinate.get(3, backRank));
+//				if (queen == null) {
+//					value -= 14 - boardPosition.getDepth();
+//				}
+//			}
 
 			// 7. react to opponent's threats (covered by evaluateThreatsAndProtections)
 
@@ -389,16 +391,39 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 	}
 
 	@Override
-	protected List<Move> getPossibleMoves(BoardPosition boardPosition) {
+	protected List<GameState> getSuccessors(GameState gameState) {
+		BoardPosition boardPosition = gameState.getBoardPosition();
+		List<Move> moves = null;
 		if (openings && boardPosition.getDepth() <= 1 && boardPosition.getColourToMove().equals(getColour())) {
-			return playOpening(boardPosition);
+			moves = playOpening(boardPosition);
+		} else {
+			moves = new ArrayList<>(boardPosition.getAllPossibleMoves());
+			if (gameState.getDepth() == 0) {
+				// We evaluate all possible first moves directly to prioritize them.
+				// This way we may avoid useless intermediate moves which would eventually lead
+				// to the same costs, because alpha-beta-pruning will prune them instead of the
+				// direct move.
+				ArrayList<GameState> evaluatedSuccessors = new ArrayList<>(moves.size());
+				for (Move move : moves) {
+					GameState successor = gameState.createSuccessorState(move);
+					successor.setValue(evaluate(successor.getBoardPosition()));
+					evaluatedSuccessors.add(successor);
+				}
+				Collections.sort(evaluatedSuccessors, new GameStateComparator());
+				return evaluatedSuccessors;
+			} else {
+				// we prioritize the moves with a cheaper heuristic:
+				// looking at capture moves with high figure value first seems to improve the
+				// effect of alpha-beta-pruning
+				Collections.sort(moves, new MoveComparator(boardPosition));
+			}
 		}
-		// we do not exclude any moves but prioritize them
-		// looking at capture moves with high figure value first seems to improve the
-		// effect of alpha-beta-pruning
-		ArrayList<Move> sortedMoves = new ArrayList<>(boardPosition.getAllPossibleMoves());
-		Collections.sort(sortedMoves, new MoveComparator(boardPosition));
-		return sortedMoves;
+		assert (moves != null);
+		ArrayList<GameState> successors = new ArrayList<>(moves.size());
+		for (Move move : moves) {
+			successors.add(gameState.createSuccessorState(move));
+		}
+		return successors;
 	}
 
 	private List<Move> playOpening(BoardPosition boardPosition) {
