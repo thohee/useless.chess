@@ -284,4 +284,40 @@ public class GameTest {
 			gameThread.join();
 		}
 	}
+
+	@Test
+	public void testStartFromFenPosition() throws Exception {
+
+		CommandStream commandStream = new CommandStream();
+		AnswerStream answerStream = new AnswerStream();
+
+		Game game = new Game(commandStream, new PrintStream(answerStream),
+				Game.createPlayerConfiguration(ReadyPlayer1.class.getSimpleName()));
+		game.setLogFilename("Game.log");
+
+		Thread gameThread = new Thread(new Runnable() {
+			@Override
+			public void run() {
+				game.playUciGame();
+			}
+		});
+
+		try {
+			gameThread.start();
+			commandStream.sendCommand("uci");
+			assertTrue(getResponse(answerStream).startsWith("id name"));
+			assertTrue(getResponse(answerStream).startsWith("id author"));
+			assertTrue(getResponse(answerStream).startsWith("uciok"));
+			commandStream.sendCommand("isready");
+			assertTrue(getResponse(answerStream).startsWith("readyok"));
+			String position = "position fen rrk5/8/8/8/8/8/8/6K1 w - - 18 3 moves g1f2";
+			commandStream.sendCommand(position);
+			commandStream.sendCommand("go depth 2");
+			String answer = getResponse(answerStream, null);
+			System.out.println(answer);
+		} finally {
+			commandStream.sendCommand("quit");
+			gameThread.join();
+		}
+	}
 }

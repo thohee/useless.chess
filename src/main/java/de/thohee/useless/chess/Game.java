@@ -10,6 +10,7 @@ import java.util.Scanner;
 
 import de.thohee.useless.chess.board.BoardPosition;
 import de.thohee.useless.chess.board.Colour;
+import de.thohee.useless.chess.board.FENParser;
 import de.thohee.useless.chess.board.Move;
 import de.thohee.useless.chess.player.Player;
 import de.thohee.useless.chess.player.RandomPlayer;
@@ -24,6 +25,7 @@ public class Game implements Player.OutputWriter {
 	private static final String _readyok = "readyok";
 	private static final String _position = "position";
 	private static final String _startpos = "startpos";
+	private static final String _fen = "fen";
 	private static final String _moves = "moves";
 	private static final String _go = "go";
 	private static final String _depth = "depth";
@@ -187,11 +189,24 @@ public class Game implements Player.OutputWriter {
 				return true;
 			}
 			if (inputLine != null && inputLine.startsWith(_position)) {
+				boardPosition = null;
 				String startPosAndMoves = inputLine.substring(_position.length()).trim();
+				String maybeMoves = null;
 				if (startPosAndMoves.startsWith(_startpos)) {
 					boardPosition = BoardPosition.getInitialPosition();
-					String maybeMoves = startPosAndMoves.substring(_startpos.length()).trim();
-					if (maybeMoves.startsWith(_moves)) {
+					maybeMoves = startPosAndMoves.substring(_startpos.length()).trim();
+				} else if (startPosAndMoves.startsWith(_fen)) {
+					String fenStringAndMoves = startPosAndMoves.substring(_fen.length()).trim();
+					if (fenStringAndMoves.contains(_moves)) {
+						int m = fenStringAndMoves.indexOf(_moves, 0);
+						maybeMoves = fenStringAndMoves.substring(m);
+						boardPosition = FENParser.parse(fenStringAndMoves.substring(0, m).trim());
+					} else {
+						boardPosition = FENParser.parse(fenStringAndMoves);
+					}
+				}
+				if (boardPosition != null) {
+					if (maybeMoves != null && maybeMoves.startsWith(_moves)) {
 						String[] moveTokens = maybeMoves.substring(_moves.length()).trim().split(" ");
 						for (String moveToken : moveTokens) {
 							boardPosition = boardPosition.performUciMove(moveToken);

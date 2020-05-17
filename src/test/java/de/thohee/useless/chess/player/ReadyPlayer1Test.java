@@ -64,7 +64,7 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 	@Test
 	public void testAvoidCheckmateIn4Plies() throws Exception {
 		BoardPosition boardPosition = loadPosition("SiegEnduringSilver.pgn", 12);
-		ReadyPlayer1 player = new ReadyPlayer1(boardPosition.getColourToMove(), false);
+		ReadyPlayer1 player = new ReadyPlayer1(boardPosition.getColourToMove(), true);
 		Player.Params params = new Player.Params();
 		params.maxDepthInPlies = 4;
 		boardPosition = boardPosition.performMove(player.makeMove(boardPosition, params));
@@ -368,6 +368,7 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 		}
 	}
 
+	@Ignore
 	@Test
 	public void testEvaluateOpenings() throws Exception {
 		BoardPosition boardPosition = loadPosition("ThomasWinsAgainstReadyPlayer1.pgn", 13);
@@ -383,7 +384,7 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 		System.out.println("d8d7: " + player.evaluateOpening(d8d7));
 
 		Params params = new Player.Params();
-		params.maxDepthInPlies = 5;
+		params.maxDepthInPlies = 4;
 		player.makeMove(boardPosition, params);
 		player.printEvaluatedChoices(System.out);
 

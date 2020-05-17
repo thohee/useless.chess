@@ -1,6 +1,7 @@
 package de.thohee.useless.chess.player;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -161,7 +162,7 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 	}
 
 	private Integer evaluateOpeningMidgameTacticsAndEndgame(BoardPosition boardPosition) {
-		return evaluateOpening(boardPosition);
+		return evaluateOpening(boardPosition) + evaluateEndGame(boardPosition);
 	}
 
 	private int getCastlingOptions(BoardPosition boardPosition, Colour colour) {
@@ -321,6 +322,85 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			return value;
 		} else {
 			return 0;
+		}
+	}
+
+	private Integer evaluateEndGame(BoardPosition boardPosition) {
+		final Colour opponentsColour = getColour().opposite();
+		PositionedPiece opponentsSingleKing = null;
+		Iterator<PositionedPiece> positionedPieces = boardPosition.getPositionedPieces();
+		while (positionedPieces.hasNext()) {
+			PositionedPiece positionedPiece = positionedPieces.next();
+			if (positionedPiece.getPiece().getColour().equals(opponentsColour)) {
+				if (positionedPiece.getPiece().getFigure().equals(Figure.King)) {
+					opponentsSingleKing = positionedPiece;
+				} else {
+					opponentsSingleKing = null;
+					break;
+				}
+			}
+		}
+		if (opponentsSingleKing != null) {
+			return -1 * kingsReach(boardPosition, opponentsSingleKing);
+		}
+		return 0;
+	}
+
+	// TODO: unit test
+	// TODO: move to BoardPosition
+	int kingsReach(BoardPosition boardPosition, PositionedPiece positionedKing) {
+		assert (positionedKing.getPiece().getFigure().equals(Figure.King));
+		final Colour kingsColour = positionedKing.getPiece().getColour();
+		final Coordinate startPosition = positionedKing.getCoordinate();
+		int reachablePositions = 0;
+		Set<Coordinate> lastRing = new HashSet<>();
+		lastRing.add(startPosition);
+		for (int radius = 1; radius <= 7; ++radius) {
+			Set<Coordinate> nextRing = new HashSet<>();
+			for (Coordinate previousPosition : lastRing) {
+				int dr = previousPosition.getRow() - startPosition.getRow();
+				if (Math.abs(dr) == radius - 1) {
+					int nextRow = previousPosition.getRow() + (dr > 0 ? 1 : -1);
+					for (int c : Arrays.asList(-1, 0, 1)) {
+						int nextColumn = previousPosition.getColumn() + c;
+						if (kingOfColourCanMoveTo(boardPosition, kingsColour, nextColumn, nextRow)) {
+							nextRing.add(Coordinate.get(nextColumn, nextRow));
+						}
+					}
+				}
+				int dc = previousPosition.getColumn() - startPosition.getColumn();
+				if (Math.abs(dc) == radius - 1) {
+					int nextColumn = previousPosition.getColumn() + (dc > 0 ? 1 : -1);
+					for (int r : Arrays.asList(-1, 0, 1)) {
+						int nextRow = previousPosition.getRow() + r;
+						if (kingOfColourCanMoveTo(boardPosition, kingsColour, nextColumn, nextRow)) {
+							nextRing.add(Coordinate.get(nextColumn, nextRow));
+						}
+					}
+				}
+			}
+			if (nextRing.isEmpty()) {
+				break;
+			}
+			reachablePositions += nextRing.size();
+			lastRing = nextRing;
+		}
+		return reachablePositions;
+	}
+
+	private boolean kingOfColourCanMoveTo(BoardPosition boardPosition, Colour colour, int column, int row) {
+		if (column < 0 || column > 7 || row < 0 || row > 7) {
+			return false;
+		} else {
+			Coordinate to = Coordinate.get(column, row);
+			Piece piece = boardPosition.get(to);
+			if (piece == null) {
+				return boardPosition.getThreatsTo(colour, to).isEmpty();
+			} else if (piece.getColour().equals(colour)) {
+				return false;
+			} else {
+				return boardPosition.getProtections(to).isEmpty();
+			}
 		}
 	}
 

@@ -1,0 +1,28 @@
+[Event "Computer chess game"]
+[Site "THOMAS-PC"]
+[Date "2020.05.13"]
+[Round "?"]
+[White "useless.chess ReadyPlayer1"]
+[Black "Thomas"]
+[Result "*"]
+[BlackElo "2400"]
+[ECO "D01"]
+[Opening "Richter-Veresov, 3.Nf3"]
+[Time "19:51:06"]
+[WhiteElo "2000"]
+[Termination "normal"]
+[PlyCount "120"]
+[WhiteType "program"]
+[BlackType "human"]
+
+1. d4 d5 2. Nc3 Nf6 3. Nf3 Bd7 4. Qd3 e6 5. Be3 Nc6 6. Rb1 Bd6 7. Ra1 Qe7
+8. Rb1 O-O-O 9. b3 Nb4 10. Qd2 h6 11. a3 Nc6 12. b4 g5 13. h4 Ng4 14. hxg5
+hxg5 15. Nxd5 exd5 16. Bxg5 f6 17. Rxh8 Rxh8 18. Be3 Nh2 19. Nxh2 Rxh2 20.
+b5 Nd8 21. Bf4 Bxf4 22. Qxf4 Rh1 23. Qe3 Qh7 24. Kd2 b6 25. Qf3 Qf7 26. c4
+c6 27. bxc6 Bxc6 28. cxd5 Bxd5 29. e4 Bc6 30. Ba6+ Kc7 31. Rxh1 Qa2+ 32.
+Ke1 Qa1+ 33. Qd1 Qc3+ 34. Qd2 Qxa3 35. Qf4+ Kd7 36. Rh7+ Ke8 37. Rh8+ Kd7
+38. Qf5+ Ke7 39. Bc8 Qc3+ 40. Ke2 Qxd4 41. Rh7+ Kd6 42. Rd7+ Bxd7 43. Qxd7+
+Ke5 44. Qe7+ Kf4 45. Qc7+ Qe5 46. Qc1+ Kxe4 47. Qc4+ Qd4 48. f3+ Ke5 49.
+f4+ Ke4 50. g4 Qxc4+ 51. Ke1 Kxf4 52. Bf5 Qb4+ 53. Kf2 Qd2+ 54. Kf1 Qe3 55.
+Kg2 Qf3+ 56. Kh2 Nf7 57. Bd7 Ng5 58. Bc8 Qh3+ 59. Kg1 Kg3 60. Bd7 Qg2# *
+

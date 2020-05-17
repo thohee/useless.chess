@@ -57,6 +57,7 @@ public class BoardPosition {
 	private boolean[] hasCastled = new boolean[] { false, false };
 	private ArrayList<Move> performedMoves = new ArrayList<>();
 	private Move lastMove = null;
+	private Colour colourToMove = null;
 	private BoardPosition predecessor = null;
 	private int movesWithoutPawnAndCapture = 0;
 	private int repetitions = 0;
@@ -137,6 +138,10 @@ public class BoardPosition {
 
 	public long getDepth() {
 		return depth;
+	}
+
+	void setDepth(long depth) {
+		this.depth = depth;
 	}
 
 	public int getRepetitions() {
@@ -553,7 +558,12 @@ public class BoardPosition {
 	}
 
 	public Colour getColourToMove() {
-		return lastMove != null ? lastMove.getColour().opposite() : Colour.White;
+		return lastMove != null ? lastMove.getColour().opposite()
+				: (colourToMove != null ? colourToMove : Colour.White);
+	}
+
+	void setColourToMove(Colour colour) {
+		colourToMove = colour;
 	}
 
 	private void analyze0() {
