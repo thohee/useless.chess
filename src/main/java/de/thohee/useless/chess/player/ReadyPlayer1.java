@@ -7,6 +7,7 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -341,25 +342,39 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			}
 		}
 		if (opponentsSingleKing != null) {
-			return -1 * kingsReach(boardPosition, opponentsSingleKing);
+			return -1 * kingsReach(boardPosition, opponentsSingleKing, null);
 		}
 		return 0;
 	}
 
-	// TODO: unit test
-	// TODO: move to BoardPosition
-	int kingsReach(BoardPosition boardPosition, PositionedPiece positionedKing) {
+	static int kingsReach(BoardPosition boardPosition, PositionedPiece positionedKing,
+			Map<Coordinate, Integer> debugMap) {
 		assert (positionedKing.getPiece().getFigure().equals(Figure.King));
 		final Colour kingsColour = positionedKing.getPiece().getColour();
 		final Coordinate startPosition = positionedKing.getCoordinate();
-		int reachablePositions = 0;
+		Set<Coordinate> reachablePositions = new HashSet<>();
 		Set<Coordinate> lastRing = new HashSet<>();
-		lastRing.add(startPosition);
-		for (int radius = 1; radius <= 7; ++radius) {
+		for (int c : Arrays.asList(-1, 0, 1)) {
+			for (int r : Arrays.asList(-1, 0, 1)) {
+				if (c != 0 || r != 0) {
+					int column = startPosition.getColumn() + c;
+					int row = startPosition.getRow() + r;
+					if (kingOfColourCanMoveTo(boardPosition, kingsColour, column, row)) {
+						Coordinate coordinate = Coordinate.get(column, row);
+						lastRing.add(coordinate);
+						if (debugMap != null) {
+							debugMap.put(coordinate, 1);
+						}
+					}
+				}
+			}
+		}
+		reachablePositions.addAll(lastRing);
+		for (int radius = 2; radius <= 7; ++radius) {
 			Set<Coordinate> nextRing = new HashSet<>();
 			for (Coordinate previousPosition : lastRing) {
 				int dr = previousPosition.getRow() - startPosition.getRow();
-				if (Math.abs(dr) == radius - 1) {
+				{
 					int nextRow = previousPosition.getRow() + (dr > 0 ? 1 : -1);
 					for (int c : Arrays.asList(-1, 0, 1)) {
 						int nextColumn = previousPosition.getColumn() + c;
@@ -367,9 +382,19 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 							nextRing.add(Coordinate.get(nextColumn, nextRow));
 						}
 					}
+					for (int c : Arrays.asList(-1, 1)) {
+						int nextColumn = previousPosition.getColumn() + c;
+						if (0 <= nextColumn && nextColumn < 8) {
+							Coordinate coordinate = Coordinate.get(nextColumn, previousPosition.getRow());
+							if (!lastRing.contains(coordinate) && kingOfColourCanMoveTo(boardPosition, kingsColour,
+									nextColumn, previousPosition.getRow())) {
+								nextRing.add(coordinate);
+							}
+						}
+					}
 				}
 				int dc = previousPosition.getColumn() - startPosition.getColumn();
-				if (Math.abs(dc) == radius - 1) {
+				{
 					int nextColumn = previousPosition.getColumn() + (dc > 0 ? 1 : -1);
 					for (int r : Arrays.asList(-1, 0, 1)) {
 						int nextRow = previousPosition.getRow() + r;
@@ -377,18 +402,34 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 							nextRing.add(Coordinate.get(nextColumn, nextRow));
 						}
 					}
+					for (int r : Arrays.asList(-1, 1)) {
+						int nextRow = previousPosition.getRow() + r;
+						if (0 <= nextRow && nextRow < 8) {
+							Coordinate coordinate = Coordinate.get(previousPosition.getColumn(), nextRow);
+							if (!lastRing.contains(coordinate) && kingOfColourCanMoveTo(boardPosition, kingsColour,
+									previousPosition.getColumn(), nextRow)) {
+								nextRing.add(coordinate);
+							}
+						}
+					}
 				}
 			}
+			nextRing.removeAll(reachablePositions);
 			if (nextRing.isEmpty()) {
 				break;
+			} else if (debugMap != null) {
+				for (Coordinate c : nextRing) {
+					assert (!debugMap.containsKey(c));
+					debugMap.put(c, radius);
+				}
 			}
-			reachablePositions += nextRing.size();
+			reachablePositions.addAll(nextRing);
 			lastRing = nextRing;
 		}
-		return reachablePositions;
+		return reachablePositions.size();
 	}
 
-	private boolean kingOfColourCanMoveTo(BoardPosition boardPosition, Colour colour, int column, int row) {
+	private static boolean kingOfColourCanMoveTo(BoardPosition boardPosition, Colour colour, int column, int row) {
 		if (column < 0 || column > 7 || row < 0 || row > 7) {
 			return false;
 		} else {

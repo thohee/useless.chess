@@ -23,6 +23,7 @@ import org.junit.Test;
 import de.thohee.useless.chess.board.BoardPosition;
 import de.thohee.useless.chess.board.Colour;
 import de.thohee.useless.chess.board.Coordinate;
+import de.thohee.useless.chess.board.FENParser;
 import de.thohee.useless.chess.board.Figure;
 import de.thohee.useless.chess.board.GameReport;
 import de.thohee.useless.chess.board.Move;
@@ -368,12 +369,11 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 		}
 	}
 
-	@Ignore
 	@Test
 	public void testEvaluateOpenings() throws Exception {
 		BoardPosition boardPosition = loadPosition("ThomasWinsAgainstReadyPlayer1.pgn", 13);
 		ReadyPlayer1 player = new ReadyPlayer1(Colour.Black, true);
-		player.setDebug();
+//		player.setDebug();
 
 		BoardPosition a8a7 = boardPosition.performMove(boardPosition.parseUciMove("a8a7"));
 		BoardPosition f8e7 = boardPosition.performMove(boardPosition.parseUciMove("f8e7"));
@@ -389,4 +389,47 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 		player.printEvaluatedChoices(System.out);
 
 	}
+
+	private void print(BoardPosition boardPosition, Map<Coordinate, Integer> debugMap) {
+		for (int r = 7; r >= 0; --r) {
+			for (int c = 0; c < 8; ++c) {
+				if (c > 0) {
+					System.out.print(" ");
+				}
+				Coordinate coordinate = Coordinate.get(c, r);
+				if (debugMap.containsKey(coordinate)) {
+					System.out.print(debugMap.get(coordinate));
+				} else if (boardPosition.get(coordinate) != null) {
+					Piece p = boardPosition.get(coordinate);
+					String f = p.getFigure().toString();
+					System.out.print(p.getColour().equals(Colour.Black) ? f.toLowerCase() : f);
+				} else {
+					System.out.print(".");
+				}
+			}
+			System.out.println();
+		}
+	}
+
+	@Test
+	public void testKingsReach_onEmptyBoard() {
+		Map<Coordinate, Integer> debugMap = new HashMap<>();
+		BoardPosition boardPosition = FENParser.parse("8/8/8/8/8/3K4/8/8 w - - 0 1");
+		int reach = ReadyPlayer1.kingsReach(boardPosition,
+				new PositionedPiece(Coordinate.d3, boardPosition.get(Coordinate.d3)), debugMap);
+		print(boardPosition, debugMap);
+		assertEquals(63, reach);
+	}
+
+	@Test
+	public void testKingsReach_withOtherPieces() {
+		Map<Coordinate, Integer> debugMap = new HashMap<>();
+		BoardPosition boardPosition = FENParser.parse("r7/8/8/2p5/3PP3/3K4/7p/6b1 w - - 0 1");
+		System.out.println(boardPosition.toString());
+		int reach = ReadyPlayer1.kingsReach(boardPosition,
+				new PositionedPiece(Coordinate.d3, boardPosition.get(Coordinate.d3)), debugMap);
+		print(boardPosition, debugMap);
+		assertEquals(42, reach);
+	}
+
 }
