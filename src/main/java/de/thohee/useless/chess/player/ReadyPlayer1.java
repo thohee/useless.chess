@@ -166,7 +166,7 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 		return evaluateOpening(boardPosition) + evaluateEndGame(boardPosition);
 	}
 
-	private int getCastlingOptions(BoardPosition boardPosition, Colour colour) {
+	int getCastlingOptions(BoardPosition boardPosition, Colour colour) {
 		boolean king = false;
 		int numberOfRooks = 0;
 		for (Piece piece : boardPosition.getCastlingPieces()) {
@@ -214,8 +214,10 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 		}
 	}
 
+	private static final int openingPlies = 30;
+
 	Integer evaluateOpening(BoardPosition boardPosition) {
-		if (boardPosition.getDepth() <= 20) {
+		if (boardPosition.getDepth() <= openingPlies) {
 			final Colour ownColour = getColour();
 			int value = 0;
 
@@ -223,7 +225,7 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			if (rooksAreConnected) {
 				return value;
 			} else {
-				value -= 20 - boardPosition.getDepth();
+				value -= openingPlies - boardPosition.getDepth();
 			}
 
 			// 1. occupy center
@@ -311,12 +313,12 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			// 6. do not develop the queen too early
 			// implicitly achieved by keeping the castling options and forcing to develop
 			// the minor pieces
-//			if (undevelopedMinorPieces > 0 && boardPosition.getDepth() <= 14) {
-//				Piece queen = boardPosition.get(Coordinate.get(3, backRank));
-//				if (queen == null) {
-//					value -= 14 - boardPosition.getDepth();
-//				}
-//			}
+			if (undevelopedMinorPieces > 0 && boardPosition.getDepth() <= 14) {
+				Piece queen = boardPosition.get(Coordinate.get(3, backRank));
+				if (queen == null) {
+					value -= 14 - boardPosition.getDepth();
+				}
+			}
 
 			// 7. react to opponent's threats (covered by evaluateThreatsAndProtections)
 
@@ -519,7 +521,7 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			moves = playOpening(boardPosition);
 		} else {
 			moves = new ArrayList<>(boardPosition.getAllPossibleMoves());
-			if (gameState.getDepth() == 0) {
+			if (gameState.getDepth() == 0 && boardPosition.getDepth() <= openingPlies) {
 				// We evaluate all possible first moves directly to prioritize them.
 				// This way we may avoid useless intermediate moves which would eventually lead
 				// to the same costs, because alpha-beta-pruning will prune them instead of the

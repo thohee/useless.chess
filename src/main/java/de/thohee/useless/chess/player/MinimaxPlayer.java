@@ -322,15 +322,16 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 				? previouslyEvaluatedMoves
 				: evaluatedMoves;
 		for (GameState gameState : col) {
+			String evaluatedMove = gameState.getBoardPosition().getLastMove().asUciMove() + " "
+					+ gameState.getValue().toString();
 			if (debug) {
 				assert (gameState.getValue().getBoardPosition() != null);
 				List<Move> performedMoves = gameState.getValue().getBoardPosition().getPerformedMoves();
-				printStream.println(Move.toString(performedMoves.subList(
+				printStream.println(evaluatedMove + " " + Move.toString(performedMoves.subList(
 						gameState.getBoardPosition().getPerformedMoves().size() - 1, performedMoves.size()), false));
 				printStream.println(gameState.getValue().getBoardPosition().toString());
 			} else {
-				printStream.println(
-						gameState.getBoardPosition().getLastMove().asUciMove() + " " + gameState.getValue().toString());
+				printStream.println(evaluatedMove);
 			}
 		}
 		printStream.println();

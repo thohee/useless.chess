@@ -183,7 +183,7 @@ public class BoardPosition {
 		boolean moveWithoutPawnAndCapture = true;
 		if (move.getCastling() == null) {
 			movePiece(newBoardPosition, move.getFrom(), move.getTo(), move.getNewFigure());
-			newBoardPosition.castlingPieces.remove(this.get(move.getTo()));
+			newBoardPosition.castlingPieces.remove(newBoardPosition.get(move.getTo()));
 			moveWithoutPawnAndCapture = !move.getFigure().equals(Figure.Pawn) && move.getCapture().equals(Capture.None);
 		} else {
 			performCastling(newBoardPosition, move.getColour(), move.getCastling());
