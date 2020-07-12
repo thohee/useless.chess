@@ -216,8 +216,14 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 
 	private static final int openingPlies = 30;
 
+	private boolean evaluateOpenings = true;
+
+	void setEvaluateOpenings(boolean evaluateOpenings) {
+		this.evaluateOpenings = evaluateOpenings;
+	}
+
 	Integer evaluateOpening(BoardPosition boardPosition) {
-		if (boardPosition.getDepth() <= openingPlies) {
+		if (this.evaluateOpenings && boardPosition.getDepth() <= openingPlies) {
 			final Colour ownColour = getColour();
 			int value = 0;
 

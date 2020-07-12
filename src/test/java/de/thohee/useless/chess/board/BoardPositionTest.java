@@ -616,7 +616,7 @@ public class BoardPositionTest {
 		lastPositionByColour.put(Colour.White, Coordinate.parse("a7"));
 		lastPositionByColour.put(Colour.Black, Coordinate.parse("a8"));
 		int n = 0;
-		for (int m = 1; n < 50; ++m) {
+		for (int m = 1; n < 100; ++m) {
 			for (Colour colour : Arrays.asList(Colour.White, Colour.Black)) {
 				int startRow = colour.equals(Colour.White) ? 6 : 7;
 				int dr = m / 8;
@@ -631,15 +631,15 @@ public class BoardPositionTest {
 						+ " <> " + move.toString(), boardPosition.getPossibleMoves().contains(move));
 				boardPosition = boardPosition.performMove(move);
 				++n;
-				assertEquals(n == 50, boardPosition.isDraw());
-				if (n == 50 || boardPosition.isDraw()) {
+				assertEquals(n == 100, boardPosition.isDraw());
+				if (n == 100 || boardPosition.isDraw()) {
 					assertTrue(boardPosition.getPossibleMoves().isEmpty());
 					break;
 				}
 				lastPositionByColour.put(colour, nextPosition);
 			}
 		}
-		assertTrue(n == 50);
+		assertTrue(n == 100);
 	}
 
 	@Test

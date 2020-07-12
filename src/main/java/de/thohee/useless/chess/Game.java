@@ -7,6 +7,9 @@ import java.io.PrintStream;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Scanner;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 
 import de.thohee.useless.chess.board.BoardPosition;
 import de.thohee.useless.chess.board.Colour;
@@ -18,6 +21,7 @@ import de.thohee.useless.chess.player.ReadyPlayer1;
 
 public class Game implements Player.OutputWriter {
 
+	private static final String _xboard = "xboard";
 	private static final String _uci = "uci";
 	private static final String _uciok = "uciok";
 	private static final String _info = "info string ";
@@ -42,7 +46,7 @@ public class Game implements Player.OutputWriter {
 	private PlayerConfiguration playerConfiguration;
 	private Player player;
 	private BoardPosition boardPosition;
-	private Thread playerThread;
+	private ExecutorService executor = Executors.newSingleThreadExecutor();
 
 	private InputStream inStream;
 	private PrintStream outStream;
@@ -169,6 +173,11 @@ public class Game implements Player.OutputWriter {
 		Scanner scanner = new Scanner(this.inStream);
 		String firstLine = scanner.nextLine();
 		writeToLog(_recv + firstLine);
+		if (_xboard.equals(firstLine)) {
+			// ignore. May be send for protocol auto detection.
+			firstLine = scanner.nextLine();
+			writeToLog(_recv + firstLine);
+		}
 		if (_uci.equals(firstLine)) {
 			println("id name de.thohee.useless.chess");
 			println("id author thohee");
@@ -176,8 +185,21 @@ public class Game implements Player.OutputWriter {
 			while (processCommand(scanner.nextLine()))
 				;
 			scanner.close();
+			shutdownExecutor();
 		} else {
 			println("I only understand uci.");
+		}
+	}
+
+	private void shutdownExecutor() {
+		try {
+			executor.shutdown();
+			executor.awaitTermination(500, TimeUnit.MILLISECONDS);
+		} catch (InterruptedException e) {
+		} finally {
+			if (!executor.isTerminated()) {
+				executor.shutdownNow();
+			}
 		}
 	}
 
@@ -257,9 +279,6 @@ public class Game implements Player.OutputWriter {
 				if (this.player != null) {
 					this.player.stop();
 				}
-				if (this.playerThread != null && this.playerThread.isAlive()) {
-					this.playerThread.join(100);
-				}
 				return false;
 			}
 			return true;
@@ -270,14 +289,8 @@ public class Game implements Player.OutputWriter {
 	}
 
 	private void findBestMoveConcurrently(Player.Params params) {
-		if (playerThread != null && playerThread.isAlive()) {
-			player.stop();
-			try {
-				playerThread.join(100);
-			} catch (InterruptedException e) {
-			}
-		}
-		playerThread = new Thread(new Runnable() {
+		player.stop();
+		executor.submit(new Runnable() {
 			@Override
 			public void run() {
 				try {
@@ -290,7 +303,6 @@ public class Game implements Player.OutputWriter {
 				}
 			}
 		});
-		playerThread.start();
 	}
 
 	@Override

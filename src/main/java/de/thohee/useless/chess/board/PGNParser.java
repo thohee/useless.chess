@@ -135,10 +135,12 @@ public class PGNParser {
 				current = new GameReport();
 				current.setEvent(line.split("\"")[1]);
 				boardPosition = BoardPosition.getInitialPosition();
+				current.setInitialPosition(boardPosition);
 			} else if (line.startsWith("[FEN ")) {
 				int startIndex = line.indexOf("\"", 0) + 1;
 				int endIndex = line.indexOf("\"", startIndex);
 				boardPosition = FENParser.parse(line.substring(startIndex, endIndex));
+				current.setInitialPosition(boardPosition);
 			} else if (line.startsWith("[Round ")) {
 				current.setRound(line.split("\"")[1]);
 			} else if (line.startsWith("[Date ")) {
@@ -173,6 +175,7 @@ public class PGNParser {
 				try {
 					while (moveScanner.hasNext()) {
 						String token = next(moveScanner);
+						//						System.out.print(token + " ");
 						if (token.equals("*")) {
 							break;
 						}
@@ -181,6 +184,7 @@ public class PGNParser {
 						boardPosition = boardPosition.performMove(moveWhite);
 						if (moveScanner.hasNext()) {
 							token = next(moveScanner);
+							//							System.out.print(token + " ");
 							if (token.equals("*")) {
 								break;
 							}
@@ -192,6 +196,7 @@ public class PGNParser {
 				} catch (NoSuchElementException e) {
 
 				}
+				System.out.println();
 				moveScanner.close();
 			}
 		}

@@ -183,6 +183,7 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 		if (transpositionTable != null) {
 			writeLine("#cache hits:      " + transpositionTable.getCacheHits());
 			writeLine("#cache misses:    " + transpositionTable.getCacheMisses());
+			transpositionTable.clear();
 		}
 		if (previouslyEvaluatedMoves != null && !previouslyEvaluatedMoves.isEmpty()) {
 			writeLine("returning best choice of previous max depth");

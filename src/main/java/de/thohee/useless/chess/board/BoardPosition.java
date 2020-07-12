@@ -173,7 +173,7 @@ public class BoardPosition {
 	}
 
 	public BoardPosition performMove(Move move) {
-		assert (getPossibleMoves().contains(move));
+		assert (getPossibleMoves().contains(move)) : move;
 		return justPerformMove(move);
 	}
 
@@ -527,7 +527,8 @@ public class BoardPosition {
 
 	public boolean isDrawDisregardingStalemate() {
 
-		if (this.movesWithoutPawnAndCapture >= 50) {
+		// 100 plies = 50 moves
+		if (this.movesWithoutPawnAndCapture >= 100) {
 			return true;
 		}
 
@@ -612,9 +613,9 @@ public class BoardPosition {
 	}
 
 	/**
-	 * @return all allowed moves, which particularly excludes moves, after which the
-	 *         king of the moving color is (still) in check. This requires analyzing
-	 *         the resulting positions as well.
+	 * @return all allowed moves, which particularly excludes moves, after which
+	 *         the king of the moving color is (still) in check. This requires
+	 *         analyzing the resulting positions as well.
 	 */
 	public List<Move> getPossibleMoves() {
 		analyze();
@@ -625,8 +626,8 @@ public class BoardPosition {
 	}
 
 	/**
-	 * @return all possible moves including those after which the king of the moving
-	 *         color is (still) in check, which is actually not allowed.
+	 * @return all possible moves including those after which the king of the
+	 *         moving color is (still) in check, which is actually not allowed.
 	 */
 	public List<Move> getAllPossibleMoves() {
 		analyze0();

@@ -11,6 +11,7 @@ public class GameReport {
 	private String white;
 	private String black;
 	private Result result;
+	private BoardPosition initialPosition = null;
 	private List<Move> moves = new LinkedList<>();
 
 	public String getEvent() {
@@ -35,6 +36,14 @@ public class GameReport {
 
 	public Result getResult() {
 		return result;
+	}
+
+	public void setInitialPosition(BoardPosition boardPosition) {
+		this.initialPosition = boardPosition;
+	}
+
+	public BoardPosition getInitialPosition() {
+		return initialPosition;
 	}
 
 	public void add(Move move) {

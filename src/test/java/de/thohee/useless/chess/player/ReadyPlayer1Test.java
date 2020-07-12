@@ -356,7 +356,7 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 	public void testEvaluateOpenings() throws Exception {
 		BoardPosition boardPosition = PositionLoader.loadPosition("ThomasWinsAgainstReadyPlayer1.pgn", 13);
 		ReadyPlayer1 player = new ReadyPlayer1(Colour.Black, true);
-//		player.setDebug();
+		//		player.setDebug();
 
 		BoardPosition a8a7 = boardPosition.performMove(boardPosition.parseUciMove("a8a7"));
 		BoardPosition f8e7 = boardPosition.performMove(boardPosition.parseUciMove("f8e7"));
@@ -413,6 +413,20 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 				new PositionedPiece(Coordinate.d3, boardPosition.get(Coordinate.d3)), debugMap);
 		print(boardPosition, debugMap);
 		assertEquals(42, reach);
+	}
+
+	@Test
+	public void testAvoidNoSuchElementException() throws FileNotFoundException, IllegalMoveFormatException {
+
+		BoardPosition boardPosition = PositionLoader.loadPosition("NoSuchElementException.pgn");
+		ReadyPlayer1 player = new ReadyPlayer1(Colour.Black, true);
+		player.setEvaluateOpenings(false);
+
+		Params params = new Params();
+		params.maxDepthInPlies = 8;
+		Move move = player.makeMove(boardPosition, params);
+		System.out.println(move);
+
 	}
 
 }
