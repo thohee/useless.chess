@@ -175,7 +175,7 @@ public class PGNParser {
 				try {
 					while (moveScanner.hasNext()) {
 						String token = next(moveScanner);
-						//						System.out.print(token + " ");
+						// System.out.print(token + " ");
 						if (token.equals("*")) {
 							break;
 						}
@@ -184,7 +184,7 @@ public class PGNParser {
 						boardPosition = boardPosition.performMove(moveWhite);
 						if (moveScanner.hasNext()) {
 							token = next(moveScanner);
-							//							System.out.print(token + " ");
+							// System.out.print(token + " ");
 							if (token.equals("*")) {
 								break;
 							}
@@ -196,7 +196,7 @@ public class PGNParser {
 				} catch (NoSuchElementException e) {
 
 				}
-				System.out.println();
+//				System.out.println();
 				moveScanner.close();
 			}
 		}
