@@ -134,6 +134,8 @@ public class BoardPosition {
 	BoardPosition(BoardPosition other) {
 		board = new ChessBoard(other.board);
 		castlingPieces = new HashSet<>(other.castlingPieces);
+		hasCastled[0] = other.hasCastled[0];
+		hasCastled[1] = other.hasCastled[1];
 	}
 
 	public long getDepth() {
@@ -613,9 +615,9 @@ public class BoardPosition {
 	}
 
 	/**
-	 * @return all allowed moves, which particularly excludes moves, after which
-	 *         the king of the moving color is (still) in check. This requires
-	 *         analyzing the resulting positions as well.
+	 * @return all allowed moves, which particularly excludes moves, after which the
+	 *         king of the moving color is (still) in check. This requires analyzing
+	 *         the resulting positions as well.
 	 */
 	public List<Move> getPossibleMoves() {
 		analyze();
@@ -626,8 +628,8 @@ public class BoardPosition {
 	}
 
 	/**
-	 * @return all possible moves including those after which the king of the
-	 *         moving color is (still) in check, which is actually not allowed.
+	 * @return all possible moves including those after which the king of the moving
+	 *         color is (still) in check, which is actually not allowed.
 	 */
 	public List<Move> getAllPossibleMoves() {
 		analyze0();

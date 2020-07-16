@@ -356,7 +356,7 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 	public void testEvaluateOpenings() throws Exception {
 		BoardPosition boardPosition = PositionLoader.loadPosition("ThomasWinsAgainstReadyPlayer1.pgn", 13);
 		ReadyPlayer1 player = new ReadyPlayer1(Colour.Black, true);
-		//		player.setDebug();
+		// player.setDebug();
 
 		BoardPosition a8a7 = boardPosition.performMove(boardPosition.parseUciMove("a8a7"));
 		BoardPosition f8e7 = boardPosition.performMove(boardPosition.parseUciMove("f8e7"));
@@ -426,7 +426,43 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 		params.maxDepthInPlies = 8;
 		Move move = player.makeMove(boardPosition, params);
 		System.out.println(move);
+	}
 
+	@Test
+	public void testDoCastle() throws Exception {
+
+		BoardPosition boardPosition = PositionLoader.loadPosition("WhyNotCastle.pgn", 13);
+		System.out.println(boardPosition.toString());
+		ReadyPlayer1 player = new ReadyPlayer1(Colour.Black, true);
+
+		BoardPosition path1 = boardPosition.performMove(boardPosition.parseUciMove("d8c8"));
+		path1 = path1.performMove(path1.parseUciMove("h2h3"));
+		path1 = path1.performMove(path1.parseUciMove("g4f3"));
+		path1 = path1.performMove(path1.parseUciMove("e2f3"));
+		Integer openingValue1 = player.evaluateOpeningMidgameTacticsAndEndgame(path1);
+		System.out.print(path1);
+		System.out.println(openingValue1);
+		System.out.println();
+
+		BoardPosition path2 = boardPosition.performMove(boardPosition.parseUciMove("e8g8"));
+		path2 = path2.performMove(path2.parseUciMove("h2h3"));
+		path2 = path2.performMove(path2.parseUciMove("g4f3"));
+		path2 = path2.performMove(path2.parseUciMove("g2f3"));
+		assertTrue(path2.hasCastled(player.getColour()));
+		Integer openingValue2 = player.evaluateOpeningMidgameTacticsAndEndgame(path2);
+		System.out.print(path2);
+		System.out.println(openingValue2);
+		System.out.println();
+
+		assertTrue(openingValue1.compareTo(openingValue2) < 0);
+
+		player.setDebug();
+		Params params = new Params();
+		params.maxDepthInPlies = 4;
+		Move move = player.makeMove(boardPosition, params);
+		System.out.println(move);
+		player.printEvaluatedChoices(System.out);
+		assertTrue(move.getCastling() != null);
 	}
 
 }

@@ -162,7 +162,7 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 		return threatsValue;
 	}
 
-	private Integer evaluateOpeningMidgameTacticsAndEndgame(BoardPosition boardPosition) {
+	Integer evaluateOpeningMidgameTacticsAndEndgame(BoardPosition boardPosition) {
 		return evaluateOpening(boardPosition) + evaluateEndGame(boardPosition);
 	}
 
