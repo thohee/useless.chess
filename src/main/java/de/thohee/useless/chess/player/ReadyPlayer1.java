@@ -527,25 +527,10 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			moves = playOpening(boardPosition);
 		} else {
 			moves = new ArrayList<>(boardPosition.getAllPossibleMoves());
-			if (gameState.getDepth() == 0 && boardPosition.getDepth() <= openingPlies) {
-				// We evaluate all possible first moves directly to prioritize them.
-				// This way we may avoid useless intermediate moves which would eventually lead
-				// to the same costs, because alpha-beta-pruning will prune them instead of the
-				// direct move.
-				ArrayList<GameState> evaluatedSuccessors = new ArrayList<>(moves.size());
-				for (Move move : moves) {
-					GameState successor = gameState.createSuccessorState(move);
-					successor.setValue(evaluate(successor.getBoardPosition()));
-					evaluatedSuccessors.add(successor);
-				}
-				Collections.sort(evaluatedSuccessors, new GameStateComparator());
-				return evaluatedSuccessors;
-			} else {
-				// we prioritize the moves with a cheaper heuristic:
-				// looking at capture moves with high figure value first seems to improve the
-				// effect of alpha-beta-pruning
-				Collections.sort(moves, new MoveComparator(boardPosition));
-			}
+			// we prioritize the moves with a cheaper heuristic:
+			// looking at capture moves with high figure value first seems to improve the
+			// effect of alpha-beta-pruning
+			Collections.sort(moves, new MoveComparator(boardPosition));
 		}
 		assert (moves != null);
 		ArrayList<GameState> successors = new ArrayList<>(moves.size());
