@@ -4,6 +4,7 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
@@ -50,7 +51,8 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 	}
 
 	public void setDebug() {
-		debug = true;
+		assert (this.transpositionTable == null);
+		this.debug = true;
 	}
 
 	protected class GameState {
@@ -187,15 +189,17 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 		}
 		if (previouslyEvaluatedMoves != null && !previouslyEvaluatedMoves.isEmpty()) {
 			writeLine("returning best choice of previous max depth");
-			return previouslyEvaluatedMoves.get(0).getBoardPosition().getLastMove();
+			return selectMove(previouslyEvaluatedMoves.iterator());
 		} else if (!evaluatedMoves.isEmpty()) {
 			writeLine("returning best choice of current max depth");
-			return evaluatedMoves.iterator().next().getBoardPosition().getLastMove();
+			return selectMove(evaluatedMoves.iterator());
 		} else {
 			writeLine("returning first possible move");
 			return boardPosition.getPossibleMoves().iterator().next();
 		}
 	}
+
+	protected abstract Move selectMove(Iterator<GameState> evalutatedGameStates);
 
 	private static Value min(Value a, Value b) {
 		return a.compareTo(b) < 0 ? a : b;
@@ -207,7 +211,7 @@ public abstract class MinimaxPlayer extends EnginePlayer {
 
 	private boolean terminalTest(GameState gameState) {
 		return (getMaxDepth() != null && gameState.getDepth() >= getMaxDepth())
-				|| gameState.getBoardPosition().isDrawDisregardingStalemate()
+				|| gameState.getBoardPosition().isDrawDisregardingStalemateAndThreeFoldRepetition()
 				|| gameState.getBoardPosition().getAllPossibleMoves().isEmpty() || (getCutoffDepth() != null
 						&& gameState.getDepth() >= getCutoffDepth() && isQuiescent(gameState.getBoardPosition()));
 	}

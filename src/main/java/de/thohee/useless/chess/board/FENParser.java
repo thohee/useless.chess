@@ -103,7 +103,7 @@ public class FENParser {
 
 	private static void setDepth(String field, BoardPosition boardPosition) {
 		int nextFullMove = Integer.parseInt(field);
-		long depth = 2 * (nextFullMove - 1);
+		int depth = 2 * (nextFullMove - 1);
 		if (boardPosition.getColourToMove().equals(Colour.Black)) {
 			++depth;
 		}

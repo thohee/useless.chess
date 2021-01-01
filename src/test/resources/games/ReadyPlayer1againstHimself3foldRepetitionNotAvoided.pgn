@@ -1,0 +1,31 @@
+[Event "Computer chess game"]
+[Site "TERRA"]
+[Date "2020.12.21"]
+[Round "?"]
+[White "useless.chess"]
+[Black "useless.chess"]
+[Result "1/2-1/2"]
+[BlackElo "2000"]
+[ECO "C20"]
+[Opening "Open Game"]
+[Time "18:33:14"]
+[Variation "Patzer-Parnham Opening, 1.e4 e5 2.Qh5"]
+[WhiteElo "2000"]
+[Termination "normal"]
+[PlyCount "143"]
+[WhiteType "program"]
+[BlackType "program"]
+
+1. e4 e5 2. Qh5 Qf6 3. Qf3 Qf4 4. Qxf4 exf4 5. d3 Bd6 6. Ne2 c6 7. Bxf4
+Bxf4 8. Nxf4 Ne7 9. a3 O-O 10. Nc3 g5 11. Nh3 f6 12. Rb1 d6 13. Ng1 Nd7 14.
+d4 Ng6 15. d5 Rb8 16. a4 Ra8 17. dxc6 bxc6 18. Rd1 Rb8 19. Rxd6 Nde5 20. b3
+Ra8 21. Nf3 Nxf3+ 22. gxf3 Ne5 23. Bc4+ Nxc4 24. bxc4 Bb7 25. Rd7 Rf7 26.
+Rxf7 Kxf7 27. c5 a5 28. h4 gxh4 29. Rxh4 Rh8 30. Na2 Ba8 31. Nc1 Rg8 32.
+Rxh7+ Rg7 33. Rxg7+ Kxg7 34. Nb3 Bb7 35. Nxa5 Ba8 36. Nc4 Kh6 37. a5 Bb7
+38. c3 Ba6 39. Nb2 Kg5 40. c4 Bc8 41. Nd3 Ba6 42. Nb4 Bxc4 43. Nxc6 Bb3 44.
+Nd4 Ba2 45. Ne2 Bc4 46. Kd2 Bxe2 47. Kxe2 f5 48. Ke3 fxe4 49. fxe4 Kh4 50.
+a6 Kg5 51. a7 Kh4 52. a8=Q Kg5 53. Qc6 Kg4 54. Qd5 Kh3 55. Qg5 Kh2 56. Kf3
+Kh1 57. c6 Kh2 58. c7 Kh1 59. c8=Q Kh2 60. Qb7 Kh1 61. Qa6 Kh2 62. Qab5 Kh1
+63. Qa4 Kh2 64. Qb3 Kh1 65. Qa2 Kh2 66. Qb1 Kh3 67. Qa2 Kh2 68. Qb1 Kh3 69.
+Qc2 Kh2 70. Qd1 Kh3 71. Qc2 Kh2 72. Qb1 {3-fold repetition} 1/2-1/2
+

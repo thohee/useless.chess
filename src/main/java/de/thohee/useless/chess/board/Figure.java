@@ -35,8 +35,10 @@ public enum Figure {
 			return Bishop;
 		case "N":
 			return Knight;
-		default:
+		case "P":
 			return Pawn;
+		default:
+			return null;
 		}
 	}
 }

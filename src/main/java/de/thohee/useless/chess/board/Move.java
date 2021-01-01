@@ -178,6 +178,9 @@ public class Move {
 		default:
 			if (s.length() >= 5) {
 				Figure figure = Figure.parse(s.substring(0, 1));
+				if (figure == null) {
+					figure = Figure.Pawn;
+				}
 				int i = figure.equals(Figure.Pawn) ? 0 : 1;
 				Coordinate from = Coordinate.parse(s.substring(i, i + 2));
 				boolean isCapture = s.charAt(i + 2) == 'x';
@@ -207,8 +210,12 @@ public class Move {
 	}
 
 	public static String toString(List<Move> moves, boolean pgn) {
+		return toString(moves, 1, pgn);
+	}
+
+	public static String toString(List<Move> moves, int firstMove, boolean pgn) {
 		StringBuilder sb = new StringBuilder();
-		int m = 1;
+		int m = firstMove;
 		for (Move move : moves) {
 			if (m % 2 == 1) {
 				sb.append(Integer.toString((m + 1) / 2)).append(". ");

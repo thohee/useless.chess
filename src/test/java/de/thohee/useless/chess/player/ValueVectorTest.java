@@ -10,10 +10,10 @@ public class ValueVectorTest {
 	@Test
 	public void testCompareTo() {
 
-		assertEquals(0, ValueVector.MINIMUM.compareTo(ValueVector.MINIMUM));
-		assertEquals(0, ValueVector.MAXIMUM.compareTo(ValueVector.MAXIMUM));
-		assertEquals(-1, ValueVector.MINIMUM.compareTo(ValueVector.MAXIMUM));
-		assertEquals(1, ValueVector.MAXIMUM.compareTo(ValueVector.MINIMUM));
+		assertEquals(0, ValueVector.createMin().compareTo(ValueVector.createMin()));
+		assertEquals(0, ValueVector.createMax().compareTo(ValueVector.createMax()));
+		assertEquals(-1, ValueVector.createMin().compareTo(ValueVector.createMax()));
+		assertEquals(1, ValueVector.createMax().compareTo(ValueVector.createMin()));
 
 		ValueVector vector4x4 = new ValueVector();
 		vector4x4.add(4);
@@ -72,33 +72,33 @@ public class ValueVectorTest {
 		assertEquals(1, vector123.compareTo(vector113));
 		assertEquals(1, vector123.compareTo(vector122));
 
-		assertEquals(-1, ValueVector.MINIMUM.compareTo(vector4x4));
-		assertEquals(-1, ValueVector.MINIMUM.compareTo(vector4x5));
-		assertEquals(-1, ValueVector.MINIMUM.compareTo(vector3x5));
-		assertEquals(-1, ValueVector.MINIMUM.compareTo(vector123));
-		assertEquals(-1, ValueVector.MINIMUM.compareTo(vector223));
-		assertEquals(-1, ValueVector.MINIMUM.compareTo(vector113));
-		assertEquals(-1, ValueVector.MINIMUM.compareTo(vector122));
-		assertEquals(-1, ValueVector.MINIMUM.compareTo(vector0));
+		assertEquals(-1, ValueVector.createMin().compareTo(vector4x4));
+		assertEquals(-1, ValueVector.createMin().compareTo(vector4x5));
+		assertEquals(-1, ValueVector.createMin().compareTo(vector3x5));
+		assertEquals(-1, ValueVector.createMin().compareTo(vector123));
+		assertEquals(-1, ValueVector.createMin().compareTo(vector223));
+		assertEquals(-1, ValueVector.createMin().compareTo(vector113));
+		assertEquals(-1, ValueVector.createMin().compareTo(vector122));
+		assertEquals(-1, ValueVector.createMin().compareTo(vector0));
 
-		assertEquals(1, ValueVector.MAXIMUM.compareTo(vector4x4));
-		assertEquals(1, ValueVector.MAXIMUM.compareTo(vector4x5));
-		assertEquals(1, ValueVector.MAXIMUM.compareTo(vector3x5));
-		assertEquals(1, ValueVector.MAXIMUM.compareTo(vector123));
-		assertEquals(1, ValueVector.MAXIMUM.compareTo(vector223));
-		assertEquals(1, ValueVector.MAXIMUM.compareTo(vector113));
-		assertEquals(1, ValueVector.MAXIMUM.compareTo(vector122));
-		assertEquals(1, ValueVector.MAXIMUM.compareTo(vector0));
+		assertEquals(1, ValueVector.createMax().compareTo(vector4x4));
+		assertEquals(1, ValueVector.createMax().compareTo(vector4x5));
+		assertEquals(1, ValueVector.createMax().compareTo(vector3x5));
+		assertEquals(1, ValueVector.createMax().compareTo(vector123));
+		assertEquals(1, ValueVector.createMax().compareTo(vector223));
+		assertEquals(1, ValueVector.createMax().compareTo(vector113));
+		assertEquals(1, ValueVector.createMax().compareTo(vector122));
+		assertEquals(1, ValueVector.createMax().compareTo(vector0));
 
 		ValueVector vector3xMax = new ValueVector();
 		vector3xMax.add(Integer.MAX_VALUE);
 		vector3xMax.add(Integer.MAX_VALUE);
 		vector3xMax.add(Integer.MAX_VALUE);
 
-		assertEquals(0, vector3xMax.compareTo(ValueVector.MAXIMUM));
-		assertEquals(0, ValueVector.MAXIMUM.compareTo(vector3xMax));
-		assertEquals(1, vector3xMax.compareTo(ValueVector.MINIMUM));
-		assertEquals(-1, ValueVector.MINIMUM.compareTo(vector3xMax));
+		assertEquals(0, vector3xMax.compareTo(ValueVector.createMax()));
+		assertEquals(0, ValueVector.createMax().compareTo(vector3xMax));
+		assertEquals(1, vector3xMax.compareTo(ValueVector.createMin()));
+		assertEquals(-1, ValueVector.createMin().compareTo(vector3xMax));
 		assertEquals(1, vector3xMax.compareTo(vector123));
 		assertEquals(-1, vector123.compareTo(vector3xMax));
 
@@ -107,10 +107,10 @@ public class ValueVectorTest {
 		vector3xMin.add(Integer.MIN_VALUE);
 		vector3xMin.add(Integer.MIN_VALUE);
 
-		assertEquals(0, vector3xMin.compareTo(ValueVector.MINIMUM));
-		assertEquals(0, ValueVector.MINIMUM.compareTo(vector3xMin));
-		assertEquals(-1, vector3xMin.compareTo(ValueVector.MAXIMUM));
-		assertEquals(1, ValueVector.MAXIMUM.compareTo(vector3xMin));
+		assertEquals(0, vector3xMin.compareTo(ValueVector.createMin()));
+		assertEquals(0, ValueVector.createMin().compareTo(vector3xMin));
+		assertEquals(-1, vector3xMin.compareTo(ValueVector.createMax()));
+		assertEquals(1, ValueVector.createMax().compareTo(vector3xMin));
 		assertEquals(-1, vector3xMin.compareTo(vector123));
 		assertEquals(1, vector123.compareTo(vector3xMin));
 
@@ -119,24 +119,24 @@ public class ValueVectorTest {
 		vectorMinMin3.add(Integer.MIN_VALUE);
 		vectorMinMin3.add(3);
 
-		assertEquals(-1, ValueVector.MINIMUM.compareTo(vectorMinMin3));
-		assertEquals(1, vectorMinMin3.compareTo(ValueVector.MINIMUM));
+		assertEquals(-1, ValueVector.createMin().compareTo(vectorMinMin3));
+		assertEquals(1, vectorMinMin3.compareTo(ValueVector.createMin()));
 		assertEquals(-1, vector3xMin.compareTo(vectorMinMin3));
 		assertEquals(1, vectorMinMin3.compareTo(vector3xMin));
-		assertEquals(1, ValueVector.MAXIMUM.compareTo(vectorMinMin3));
-		assertEquals(-1, vectorMinMin3.compareTo(ValueVector.MAXIMUM));
+		assertEquals(1, ValueVector.createMax().compareTo(vectorMinMin3));
+		assertEquals(-1, vectorMinMin3.compareTo(ValueVector.createMax()));
 
 		ValueVector vectorMaxMax3 = new ValueVector();
 		vectorMaxMax3.add(Integer.MAX_VALUE);
 		vectorMaxMax3.add(Integer.MAX_VALUE);
 		vectorMaxMax3.add(3);
 
-		assertEquals(-1, ValueVector.MINIMUM.compareTo(vectorMaxMax3));
-		assertEquals(1, vectorMaxMax3.compareTo(ValueVector.MINIMUM));
+		assertEquals(-1, ValueVector.createMin().compareTo(vectorMaxMax3));
+		assertEquals(1, vectorMaxMax3.compareTo(ValueVector.createMin()));
 		assertEquals(1, vector3xMax.compareTo(vectorMaxMax3));
 		assertEquals(-1, vectorMaxMax3.compareTo(vector3xMax));
-		assertEquals(1, ValueVector.MAXIMUM.compareTo(vectorMaxMax3));
-		assertEquals(-1, vectorMaxMax3.compareTo(ValueVector.MAXIMUM));
+		assertEquals(1, ValueVector.createMax().compareTo(vectorMaxMax3));
+		assertEquals(-1, vectorMaxMax3.compareTo(ValueVector.createMax()));
 	}
 
 }

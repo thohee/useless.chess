@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -433,7 +434,7 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 
 		BoardPosition boardPosition = PositionLoader.loadPosition("WhyNotCastle.pgn", 13);
 		System.out.println(boardPosition.toString());
-		ReadyPlayer1 player = new ReadyPlayer1(Colour.Black, true);
+		ReadyPlayer1 player = new ReadyPlayer1(Colour.Black, false);
 
 		BoardPosition path1 = boardPosition.performMove(boardPosition.parseUciMove("d8c8"));
 		path1 = path1.performMove(path1.parseUciMove("h2h3"));
@@ -463,6 +464,28 @@ public class ReadyPlayer1Test implements Player.OutputWriter {
 		System.out.println(move);
 		player.printEvaluatedChoices(System.out);
 		assertTrue(move.getCastling() != null);
+	}
+
+	@Test
+	public void testCheckmateSingleKing() throws FileNotFoundException, IllegalMoveFormatException {
+		BoardPosition boardPosition = PositionLoader
+				.loadPosition("ReadyPlayer1againstHimself3foldRepetitionStillNotAvoided.pgn", 112);
+		System.out.println(boardPosition);
+		int nPerformedMoves = boardPosition.getPerformedMoves().size();
+		List<ReadyPlayer1> players = Arrays.asList(new ReadyPlayer1(Colour.White, true),
+				new ReadyPlayer1(Colour.Black, true));
+		Player.Params params = new Player.Params();
+		params.maxDepthInPlies = 4;
+		int playerToMove = 0;
+		while (!boardPosition.getPossibleMoves().isEmpty()) {
+			boardPosition = boardPosition.performMove(players.get(playerToMove).makeMove(boardPosition, params));
+			playerToMove = 1 - playerToMove;
+		}
+		System.out.println(boardPosition);
+		System.out.println(Move.toString(
+				boardPosition.getPerformedMoves().subList(nPerformedMoves, boardPosition.getPerformedMoves().size()),
+				nPerformedMoves + 1, false));
+		assert (boardPosition.isCheckmate() && boardPosition.getColourToMove() == Colour.Black);
 	}
 
 }

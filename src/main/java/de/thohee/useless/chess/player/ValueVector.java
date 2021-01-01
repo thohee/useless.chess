@@ -7,29 +7,28 @@ import de.thohee.useless.chess.board.BoardPosition;
 class ValueVector extends ArrayList<Integer> implements Value {
 	private static final long serialVersionUID = 5403861563080301920L;
 
-	final static ValueVector MINIMUM = new ValueVector().setMin();
-	final static ValueVector MAXIMUM = new ValueVector().setMax();
-	final static ValueVector INVALID = new ValueVector().setInvalid();
-
 	private boolean min = false;
 	private boolean max = false;
 	private boolean invalid = false;
 
 	private BoardPosition boardPosition = null;
 
-	private ValueVector setMax() {
-		this.max = true;
-		return this;
+	public static ValueVector createMax() {
+		ValueVector valueVector = new ValueVector();
+		valueVector.max = true;
+		return valueVector;
 	}
 
-	private ValueVector setMin() {
-		this.min = true;
-		return this;
+	public static ValueVector createMin() {
+		ValueVector valueVector = new ValueVector();
+		valueVector.min = true;
+		return valueVector;
 	}
 
-	private ValueVector setInvalid() {
-		this.invalid = true;
-		return this;
+	public static ValueVector createInvalid() {
+		ValueVector valueVector = new ValueVector();
+		valueVector.invalid = true;
+		return valueVector;
 	}
 
 	@Override

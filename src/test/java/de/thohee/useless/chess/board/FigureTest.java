@@ -1,6 +1,7 @@
 package de.thohee.useless.chess.board;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertThrows;
 
 import org.junit.Test;
@@ -13,8 +14,8 @@ public class FigureTest {
 			assertEquals(figure, Figure.parse(figure.toString()));
 		}
 		assertEquals(Figure.Pawn, Figure.parse("P"));
-		assertEquals(Figure.Pawn, Figure.parse("X"));
-		assertEquals(Figure.Pawn, Figure.parse(""));
+		assertNull(Figure.parse("X"));
+		assertNull(Figure.parse(""));
 		assertThrows(NullPointerException.class, () -> Figure.parse(null));
 	}
 

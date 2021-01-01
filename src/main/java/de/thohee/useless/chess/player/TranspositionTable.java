@@ -1,9 +1,9 @@
 package de.thohee.useless.chess.player;
 
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.Map;
 import java.util.Queue;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentLinkedQueue;
 
 import de.thohee.useless.chess.board.BoardPosition;
 
@@ -14,8 +14,8 @@ public class TranspositionTable {
 	private long cacheHits = 0L;
 	private long cacheMisses = 0L;
 
-	private Map<BoardPosition.Key, Value> hashMap = new ConcurrentHashMap<BoardPosition.Key, Value>();
-	private Queue<BoardPosition.Key> fifoQueue = new ConcurrentLinkedQueue<>();
+	private Map<BoardPosition.Key, Value> hashMap = new HashMap<BoardPosition.Key, Value>();
+	private Queue<BoardPosition.Key> fifoQueue = new LinkedList<>();
 
 	public Value get(BoardPosition.Key boardPosition) {
 		Value value = hashMap.get(boardPosition);
@@ -28,11 +28,13 @@ public class TranspositionTable {
 	}
 
 	public void put(BoardPosition.Key boardPosition, Value value) {
+		assert (value.getBoardPosition() == null);
 		hashMap.put(boardPosition, value);
 		fifoQueue.add(boardPosition);
 		while (fifoQueue.size() > MAX_SIZE) {
 			hashMap.remove(fifoQueue.poll());
 		}
+		assert (hashMap.size() <= fifoQueue.size());
 	}
 
 	public void clear() {

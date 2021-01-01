@@ -605,7 +605,8 @@ public class BoardPositionTest {
 				boardPosition = boardPosition.performMove(move);
 			}
 			// start position is repeated for the 3rd time after two cycles
-			assertEquals(i == 2, boardPosition.isDraw());
+			assertEquals(i == 2, boardPosition.isThreeFoldRepetition());
+			assertFalse(boardPosition.isDraw());
 		}
 
 		// 50 moves without pawn and capture
@@ -747,4 +748,43 @@ public class BoardPositionTest {
 		}
 	}
 
+	@Test
+	public void testDrawDueTo3foldRepetition() throws FileNotFoundException, IllegalMoveFormatException {
+
+		BoardPosition boardPosition = PositionLoader
+				.loadPosition("ReadyPlayer1againstHimself3foldRepetitionNotAvoided.pgn");
+		assertFalse(boardPosition.isDraw());
+		assertTrue(boardPosition.isThreeFoldRepetition());
+	}
+
+	@Test
+	public void testDrawDueTo3foldRepetition2() throws FileNotFoundException, IllegalMoveFormatException {
+
+		BoardPosition boardPosition = PositionLoader
+				.loadPosition("ReadyPlayer1againstHimself3foldRepetitionStillNotAvoided.pgn");
+		assertFalse(boardPosition.isDraw());
+		assertTrue(boardPosition.isThreeFoldRepetition());
+	}
+
+	@Test
+	public void testCanCaptureEnPassant() throws Exception {
+		BoardPosition boardPosition = BoardPosition.getInitialPosition();
+		boardPosition = boardPosition.performMove(PGNParser.parseMove(boardPosition, "e4"));
+		assertFalse(boardPosition.canCaptureEnPassant());
+		boardPosition = boardPosition.performMove(PGNParser.parseMove(boardPosition, "a5"));
+		assertFalse(boardPosition.canCaptureEnPassant());
+		boardPosition = boardPosition.performMove(PGNParser.parseMove(boardPosition, "e5"));
+		assertFalse(boardPosition.canCaptureEnPassant());
+		boardPosition = boardPosition.performMove(PGNParser.parseMove(boardPosition, "a4"));
+		assertFalse(boardPosition.canCaptureEnPassant());
+		boardPosition = boardPosition.performMove(PGNParser.parseMove(boardPosition, "b4"));
+		assertTrue(boardPosition.canCaptureEnPassant());
+		boardPosition = boardPosition.performMove(PGNParser.parseMove(boardPosition, "b3"));
+		assertFalse(boardPosition.canCaptureEnPassant());
+		boardPosition = boardPosition.performMove(PGNParser.parseMove(boardPosition, "d4"));
+		assertFalse(boardPosition.canCaptureEnPassant());
+		boardPosition = boardPosition.performMove(PGNParser.parseMove(boardPosition, "f5"));
+		assertTrue(boardPosition.canCaptureEnPassant());
+		boardPosition = boardPosition.performMove(PGNParser.parseMove(boardPosition, "f6"));
+	}
 }

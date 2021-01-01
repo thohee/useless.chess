@@ -10,8 +10,8 @@ import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
-import java.util.Stack;
 import java.util.stream.Collectors;
 
 import de.thohee.useless.chess.board.Move.Capture;
@@ -20,48 +20,121 @@ import de.thohee.useless.chess.board.Move.IllegalMoveFormatException;
 
 public class BoardPosition {
 
-	public interface Key {
+	public class RepeatablePosition {
+		private final ChessBoard board;
+		private final Colour colourToMove;
+		private final boolean canCaptureEnPassant;
+		private final Set<Piece> castlingPieces;
 
-	}
-
-	private class KeyImpl implements Key {
-		private ChessBoard board;
-		private int repetitions;
-		private int movesWithoutPawnAndCapture;
-
-		KeyImpl(ChessBoard board, int repetitions, int movesWithoutPawnAndCapture) {
+		public RepeatablePosition(ChessBoard board, Colour colourToMove, boolean canCaptureEnPassant,
+				Set<Piece> castlingPieces) {
 			this.board = board;
-			this.repetitions = repetitions;
-			this.movesWithoutPawnAndCapture = movesWithoutPawnAndCapture;
+			this.colourToMove = colourToMove;
+			this.canCaptureEnPassant = canCaptureEnPassant;
+			this.castlingPieces = new HashSet<>(castlingPieces);
 		}
 
 		@Override
 		public int hashCode() {
-			return 1000 * board.hashCode() + (10 * movesWithoutPawnAndCapture) + repetitions;
+			return Objects.hash(colourToMove, canCaptureEnPassant, board, castlingPieces);
 		}
 
 		@Override
 		public boolean equals(Object obj) {
-			if (obj instanceof KeyImpl) {
-				KeyImpl other = (KeyImpl) obj;
-				return other.repetitions == this.repetitions
-						&& other.movesWithoutPawnAndCapture == this.movesWithoutPawnAndCapture
-						&& other.board.equals(this.board);
-			}
-			return false;
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			RepeatablePosition other = (RepeatablePosition) obj;
+			return colourToMove == other.colourToMove && canCaptureEnPassant == other.canCaptureEnPassant
+					&& Objects.equals(castlingPieces, other.castlingPieces) && Objects.equals(board, other.board);
 		}
+
+	}
+
+	public class Key {
+		private final RepeatablePosition position;
+		private final int depth;
+
+		public Key(RepeatablePosition position, int depth) {
+			super();
+			this.position = position;
+			this.depth = depth;
+		}
+
+		@Override
+		public int hashCode() {
+			return depth + 1000 * position.hashCode();
+		}
+
+		@Override
+		public boolean equals(Object obj) {
+			if (this == obj)
+				return true;
+			if (obj == null)
+				return false;
+			if (getClass() != obj.getClass())
+				return false;
+			Key other = (Key) obj;
+			return other.depth == this.depth && Objects.equals(other.position, this.position);
+		}
+	}
+
+	public class Predecessor {
+		private final Predecessor predecessor;
+		private final RepeatablePosition position;
+		private Integer repetitions = null;
+		private Integer maxRepetitions = null;
+
+		public Predecessor(Predecessor predecessor, RepeatablePosition position) {
+			this.predecessor = predecessor;
+			this.position = position;
+		}
+
+		public int getRepetitions() {
+			if (repetitions == null) {
+				repetitions = 0;
+				Predecessor ancestor = predecessor;
+				while (ancestor != null) {
+					if (ancestor.position.equals(this.position)) {
+						repetitions = ancestor.getRepetitions() + 1;
+						break;
+					}
+					ancestor = ancestor.predecessor;
+				}
+			}
+			return repetitions;
+		}
+
+		public int getMaxRepetitions() {
+			if (maxRepetitions == null) {
+				int maxRepetitionsPredecessor = predecessor != null ? predecessor.getMaxRepetitions() : 0;
+				maxRepetitions = Math.max(maxRepetitionsPredecessor, getRepetitions());
+			}
+			return maxRepetitions;
+		}
+	}
+
+	private RepeatablePosition toRepeatablePosition() {
+		return new RepeatablePosition(this.board, this.colourToMove, this.canCaptureEnPassant(), this.castlingPieces);
+	}
+
+	public Key getKey() {
+		return new Key(toRepeatablePosition(), this.depth);
 	}
 
 	private ChessBoard board = null;
 	private Set<Piece> castlingPieces = null;
 	private boolean[] hasCastled = new boolean[] { false, false };
-	private ArrayList<Move> performedMoves = new ArrayList<>();
-	private Move lastMove = null;
+	private List<Move> performedMoves = null;
+	private Predecessor predecessor = null;
+	private Predecessor self = null;
+	private Integer numberOfRepetitions = null;
 	private Colour colourToMove = null;
-	private BoardPosition predecessor = null;
 	private int movesWithoutPawnAndCapture = 0;
-	private int repetitions = 0;
-	private long depth = 0;
+	private int depth = 0;
 
 	// cached computation results
 	private List<Move> allPossibleMoves = null;
@@ -74,27 +147,23 @@ public class BoardPosition {
 	BoardPosition() {
 		board = new ChessBoard();
 		castlingPieces = new HashSet<>();
+		performedMoves = new ArrayList<>();
 	}
 
 	@Override
 	public int hashCode() {
-		return repetitions + 10 * movesWithoutPawnAndCapture + 1000 * board.hashCode();
+		return movesWithoutPawnAndCapture + 100 * board.hashCode();
 	}
 
 	@Override
 	public boolean equals(Object obj) {
 		if (obj != null && obj instanceof BoardPosition) {
 			BoardPosition other = (BoardPosition) obj;
-			return this.depth == other.depth && this.repetitions == other.repetitions
-					&& this.movesWithoutPawnAndCapture == other.movesWithoutPawnAndCapture
+			return this.depth == other.depth && this.movesWithoutPawnAndCapture == other.movesWithoutPawnAndCapture
 					&& this.board.equals(other.board) && this.castlingPieces.equals(other.castlingPieces);
 		} else {
 			return false;
 		}
-	}
-
-	public Key getKey() {
-		return new KeyImpl(this.board, this.repetitions, this.movesWithoutPawnAndCapture);
 	}
 
 	public static BoardPosition getInitialPosition() {
@@ -136,18 +205,19 @@ public class BoardPosition {
 		castlingPieces = new HashSet<>(other.castlingPieces);
 		hasCastled[0] = other.hasCastled[0];
 		hasCastled[1] = other.hasCastled[1];
+		performedMoves = new ArrayList<>(other.performedMoves);
 	}
 
-	public long getDepth() {
+	public Predecessor getPredecessor() {
+		return this.predecessor;
+	}
+
+	public int getDepth() {
 		return depth;
 	}
 
-	void setDepth(long depth) {
+	void setDepth(int depth) {
 		this.depth = depth;
-	}
-
-	public int getRepetitions() {
-		return repetitions;
 	}
 
 	public Piece get(Coordinate coordinate) {
@@ -191,28 +261,18 @@ public class BoardPosition {
 			performCastling(newBoardPosition, move.getColour(), move.getCastling());
 			newBoardPosition.castlingPieces.removeIf(p -> p.getColour().equals(move.getColour()));
 		}
-		newBoardPosition.lastMove = move;
+		newBoardPosition.performedMoves.add(move);
 		newBoardPosition.depth = this.depth + 1;
-		newBoardPosition.predecessor = this;
+
 		if (moveWithoutPawnAndCapture) {
 			newBoardPosition.movesWithoutPawnAndCapture = this.movesWithoutPawnAndCapture + 1;
 		} // else reset to default 0
-		{
-			BoardPosition previous = this;
-			for (int i = 1; i <= 8; ++i) {
-				if (previous == null) {
-					break;
-				}
-				if (i % 4 == 0) {
-					if (newBoardPosition.board.equals(previous.board)) {
-						++newBoardPosition.repetitions;
-					} else {
-						break;
-					}
-				}
-				previous = previous.predecessor;
-			}
+
+		if (self == null) {
+			self = new Predecessor(this.predecessor, toRepeatablePosition());
 		}
+		newBoardPosition.predecessor = self;
+
 		return newBoardPosition;
 	}
 
@@ -380,6 +440,31 @@ public class BoardPosition {
 		}
 	}
 
+	private boolean pawnOfColour(int column, int row, Colour colour) {
+		if (column < 0 || column > 7 || row < 0 || row > 7) {
+			return false;
+		}
+		Piece piece = get(Coordinate.get(column, row));
+		return piece != null && piece.getFigure() == Figure.Pawn && piece.getColour() == colour;
+	}
+
+	boolean canCaptureEnPassant() {
+		Move lastMove = getLastMove();
+		if (lastMove != null && lastMove.getFigure() == Figure.Pawn) {
+			final boolean whiteMoved = lastMove.getColour() == Colour.White;
+			final int sourceRow = whiteMoved ? 1 : 6;
+			final int targetRow = whiteMoved ? 3 : 4;
+			final int column = lastMove.getTo().getColumn();
+			if (lastMove.getFrom().getRow() == sourceRow && lastMove.getTo().getRow() == targetRow) {
+				final Colour colourToMove = getColourToMove();
+				assert (whiteMoved == (colourToMove == Colour.Black));
+				return pawnOfColour(column - 1, targetRow, colourToMove)
+						|| pawnOfColour(column + 1, targetRow, colourToMove);
+			}
+		}
+		return false;
+	}
+
 	private void computePossibleMoves(PositionedPiece positionedPiece, List<Move> moves) {
 		Piece piece = positionedPiece.getPiece();
 		Coordinate position = positionedPiece.getCoordinate();
@@ -402,6 +487,7 @@ public class BoardPosition {
 			for (int dc : turns) {
 				Coordinate captureTarget = makeCoordinate(position.getColumn() + dc, position.getRow() + step);
 				if (captureTarget != null) {
+					final Move lastMove = getLastMove();
 					Piece otherPiece = get(captureTarget);
 					if (otherPiece != null) {
 						if (otherPiece.getColour().equals(colour.opposite())) {
@@ -518,6 +604,27 @@ public class BoardPosition {
 		return draw;
 	}
 
+	public boolean isThreeFoldRepetition() {
+		return getNumberOfRepetitions() >= 2;
+	}
+
+	public int getNumberOfRepetitions() {
+		if (numberOfRepetitions == null) {
+			if (self == null) {
+				self = new Predecessor(this.predecessor, toRepeatablePosition());
+			}
+			numberOfRepetitions = self.getRepetitions();
+		}
+		return numberOfRepetitions;
+	}
+
+	public int getMaxNumberOfRepetitions() {
+		if (self == null) {
+			self = new Predecessor(this.predecessor, toRepeatablePosition());
+		}
+		return self.getMaxRepetitions();
+	}
+
 	private boolean onlyKingsLeft(Iterator<Piece> iterator) {
 		while (iterator.hasNext()) {
 			if (!iterator.next().getFigure().equals(Figure.King)) {
@@ -527,14 +634,10 @@ public class BoardPosition {
 		return true;
 	}
 
-	public boolean isDrawDisregardingStalemate() {
+	public boolean isDrawDisregardingStalemateAndThreeFoldRepetition() {
 
 		// 100 plies = 50 moves
 		if (this.movesWithoutPawnAndCapture >= 100) {
-			return true;
-		}
-
-		if (this.repetitions >= 2) {
 			return true;
 		}
 
@@ -548,7 +651,7 @@ public class BoardPosition {
 
 	private boolean draw() {
 
-		if (isDrawDisregardingStalemate()) {
+		if (isDrawDisregardingStalemateAndThreeFoldRepetition()) {
 			return true;
 		}
 
@@ -561,6 +664,7 @@ public class BoardPosition {
 	}
 
 	public Colour getColourToMove() {
+		final Move lastMove = getLastMove();
 		return lastMove != null ? lastMove.getColour().opposite()
 				: (colourToMove != null ? colourToMove : Colour.White);
 	}
@@ -615,9 +719,9 @@ public class BoardPosition {
 	}
 
 	/**
-	 * @return all allowed moves, which particularly excludes moves, after which the
-	 *         king of the moving color is (still) in check. This requires analyzing
-	 *         the resulting positions as well.
+	 * @return all allowed moves, which particularly excludes moves, after which
+	 *         the king of the moving color is (still) in check. This requires
+	 *         analyzing the resulting positions as well.
 	 */
 	public List<Move> getPossibleMoves() {
 		analyze();
@@ -628,38 +732,16 @@ public class BoardPosition {
 	}
 
 	/**
-	 * @return all possible moves including those after which the king of the moving
-	 *         color is (still) in check, which is actually not allowed.
+	 * @return all possible moves including those after which the king of the
+	 *         moving color is (still) in check, which is actually not allowed.
 	 */
 	public List<Move> getAllPossibleMoves() {
 		analyze0();
 		return allPossibleMoves;
 	}
 
-	public BoardPosition getPredecessor() {
-		return predecessor;
-	}
-
-	private Stack<Move> performedMoves() {
-		Stack<Move> moveStack = new Stack<>();
-		if (lastMove == null) {
-			return moveStack;
-		}
-		BoardPosition boardPosition = this;
-		do {
-			moveStack.push(boardPosition.lastMove);
-			boardPosition = boardPosition.predecessor;
-		} while (boardPosition != null && boardPosition.lastMove != null);
-		return moveStack;
-	}
-
 	public List<Move> getPerformedMoves() {
-		Stack<Move> moveStack = performedMoves();
-		List<Move> moves = new ArrayList<>(moveStack.size());
-		while (!moveStack.isEmpty()) {
-			moves.add(moveStack.pop());
-		}
-		return moves;
+		return performedMoves;
 	}
 
 	public String showPerformedMoves() {
@@ -702,7 +784,7 @@ public class BoardPosition {
 	}
 
 	public Move getLastMove() {
-		return lastMove;
+		return performedMoves.isEmpty() ? null : performedMoves.get(performedMoves.size() - 1);
 	}
 
 	public Move getMove(Coordinate from, Coordinate to) {
@@ -713,6 +795,7 @@ public class BoardPosition {
 		Piece piece = board.get(from);
 		assert (piece != null);
 		assert (piece.getColour().equals(getColourToMove()));
+		final Move lastMove = getLastMove();
 		Capture capture = board.get(to) != null ? Capture.Regular : Capture.None;
 		if (piece.getFigure().equals(Figure.Pawn) && to.getRow() == (piece.getColour().equals(Colour.White) ? 5 : 2)
 				&& board.get(to) == null && lastMove.getFigure().equals(Figure.Pawn)
@@ -812,7 +895,7 @@ public class BoardPosition {
 			boardPosition.set(pp.getCoordinate(), pp.getPiece());
 		}
 		if (colourToMove.equals(Colour.Black)) {
-			boardPosition.lastMove = new Move(Colour.White, Castling.KingSide);
+			boardPosition.performedMoves.add(new Move(Colour.White, Castling.KingSide));
 		}
 		return boardPosition;
 	}
@@ -833,7 +916,7 @@ public class BoardPosition {
 	}
 
 	void setLastMove(Move move) {
-		this.lastMove = move;
+		this.performedMoves.add(move);
 		resetCachedValues();
 	}
 

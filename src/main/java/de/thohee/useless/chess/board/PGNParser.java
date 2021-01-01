@@ -3,10 +3,12 @@ package de.thohee.useless.chess.board;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import de.thohee.useless.chess.board.Move.Capture;
@@ -50,54 +52,76 @@ public class PGNParser {
 		return Coordinate.get(column, row);
 	}
 
-	private static Move parseMove(BoardPosition boardPosition, String moveString) throws IllegalMoveFormatException {
+	private static Move printErrorAndThrow(BoardPosition boardPosition, Collection<Move> movesToTarget,
+			String moveString) throws IllegalMoveFormatException {
+		System.err.println(Move.toString(boardPosition.getPerformedMoves(), true));
+		System.err.println(boardPosition.toString());
+		System.err.println(boardPosition.getPossibleMoves().stream().map(m -> m.toString(true))
+				.reduce((m1, m2) -> m1 + " " + m2).orElse(""));
+		System.err.println(moveString);
+		throw new IllegalMoveFormatException(
+				boardPosition.getPossibleMoves().toString() + " => " + movesToTarget.toString() + " <-> " + moveString);
+	}
+
+	public static Move parseMove(BoardPosition boardPosition, String moveString) throws IllegalMoveFormatException {
 		if (moveString.equals("O-O")) {
 			return new Move(boardPosition.getColourToMove(), Castling.KingSide);
 		} else if (moveString.equals("O-O-O")) {
 			return new Move(boardPosition.getColourToMove(), Castling.QueenSide);
 		} else {
-			Figure figure = Figure.parse(moveString.substring(0, 1));
-			Coordinate target = parseTargetCoordinate(moveString);
-			Capture capture = moveString.contains("x") ? Capture.Regular : Capture.None;
-			if (moveString.contains("e.p.") || (capture.equals(Capture.Regular) && figure.equals(Figure.Pawn)
-					&& boardPosition.get(target) == null)) {
-				capture = Capture.EnPassant;
-			}
-			Figure newFigure = null;
-			if (moveString.contains("=")) {
-				int i = moveString.indexOf("=");
-				newFigure = Figure.parse(moveString.substring(i + 1, i + 2));
-			}
-			List<Move> possibleMoves = new LinkedList<>();
-			for (Move move : boardPosition.getPossibleMoves()) {
-				if (move.getCastling() == null && move.getFigure().equals(figure) && move.getCapture().equals(capture)
-						&& move.getTo().equals(target)
-						&& ((newFigure == null && move.getNewFigure() == null) || (newFigure != null
-								&& move.getNewFigure() != null && newFigure.equals(move.getNewFigure())))) {
-					possibleMoves.add(move);
+			final Coordinate target = parseTargetCoordinate(moveString);
+			Set<Move> movesToTarget = boardPosition.getPossibleMoves().stream().filter(m -> m.getTo() == target)
+					.collect(Collectors.toSet());
+			if (movesToTarget.isEmpty()) {
+				return printErrorAndThrow(boardPosition, movesToTarget, moveString);
+			} else if (movesToTarget.size() == 1) {
+				return movesToTarget.iterator().next();
+			} else {
+				final Figure parsedFigure = Figure.parse(moveString.substring(0, 1));
+				Figure figure = parsedFigure != null ? parsedFigure : Figure.Pawn;
+
+				Capture capture = moveString.contains("x") ? Capture.Regular : Capture.None;
+				if (moveString.contains("e.p.") || (capture.equals(Capture.Regular)
+						&& (figure == null || figure == Figure.Pawn) && boardPosition.get(target) == null)) {
+					capture = Capture.EnPassant;
 				}
-			}
-			if (possibleMoves.size() > 1) {
-				String disambiguation = moveString.substring(0, moveString.indexOf(target.toString()));
-				Integer column = parseColumn(disambiguation);
-				Integer row = parseRow(disambiguation);
-				if (column != null && row != null) {
-					Coordinate src = Coordinate.get(column, row);
-					possibleMoves = possibleMoves.stream().filter(m -> m.getFrom().equals(src))
-							.collect(Collectors.toList());
-				} else if (column != null) {
-					possibleMoves = possibleMoves.stream().filter(m -> m.getFrom().getColumn() == column)
-							.collect(Collectors.toList());
-				} else if (row != null) {
-					possibleMoves = possibleMoves.stream().filter(m -> m.getFrom().getRow() == row)
-							.collect(Collectors.toList());
+
+				Figure newFigure = null;
+				if (moveString.contains("=")) {
+					int i = moveString.indexOf("=");
+					newFigure = Figure.parse(moveString.substring(i + 1, i + 2));
 				}
+
+				List<Move> possibleMoves = new LinkedList<>();
+				for (Move move : boardPosition.getPossibleMoves()) {
+					if (move.getCastling() == null && move.getFigure().equals(figure)
+							&& move.getCapture().equals(capture) && move.getTo().equals(target)
+							&& ((newFigure == null && move.getNewFigure() == null) || (newFigure != null
+									&& move.getNewFigure() != null && newFigure.equals(move.getNewFigure())))) {
+						possibleMoves.add(move);
+					}
+				}
+				if (possibleMoves.size() > 1) {
+					String disambiguation = moveString.substring(0, moveString.indexOf(target.toString()));
+					Integer column = parseColumn(disambiguation);
+					Integer row = parseRow(disambiguation);
+					if (column != null && row != null) {
+						Coordinate src = Coordinate.get(column, row);
+						possibleMoves = possibleMoves.stream().filter(m -> m.getFrom().equals(src))
+								.collect(Collectors.toList());
+					} else if (column != null) {
+						possibleMoves = possibleMoves.stream().filter(m -> m.getFrom().getColumn() == column)
+								.collect(Collectors.toList());
+					} else if (row != null) {
+						possibleMoves = possibleMoves.stream().filter(m -> m.getFrom().getRow() == row)
+								.collect(Collectors.toList());
+					}
+				}
+				if (possibleMoves.isEmpty() || possibleMoves.size() > 1) {
+					printErrorAndThrow(boardPosition, possibleMoves, moveString);
+				}
+				return possibleMoves.iterator().next();
 			}
-			if (possibleMoves.isEmpty() || possibleMoves.size() > 1) {
-				throw new IllegalMoveFormatException(boardPosition.getPossibleMoves().toString() + " => "
-						+ possibleMoves.toString() + " <-> " + moveString);
-			}
-			return possibleMoves.iterator().next();
 		}
 	}
 

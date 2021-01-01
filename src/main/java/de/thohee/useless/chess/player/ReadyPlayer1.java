@@ -49,17 +49,43 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 
 	@Override
 	protected Value evaluate(BoardPosition boardPosition) {
-		ValueVector result = null;
-		if (boardPosition.isCheckmate()) {
-			result = boardPosition.getColourToMove().equals(this.colour) ? ValueVector.MINIMUM : ValueVector.MAXIMUM;
+		ValueVector result = new ValueVector();
+
+		if (boardPosition.getPredecessor() != null && boardPosition.getPredecessor().getRepetitions() >= 4) {
+			// first move after a draw
+			return ValueVector.createInvalid();
 		} else {
-			result = new ValueVector();
-			result.add(evaluateDraw(boardPosition));
-			result.add(evaluateMaterial(boardPosition));
-			result.add(evaluateThreatsAndProtections(boardPosition));
-			result.add(evaluateOpeningMidgameTacticsAndEndgame(boardPosition));
+			boolean drawCanBeRequested = boardPosition.getMaxNumberOfRepetitions() >= 2;
+			if (boardPosition.isCheckmate()) {
+				if (boardPosition.getColourToMove().equals(this.colour)) {
+					// I loose
+					if (!drawCanBeRequested) {
+						return ValueVector.createMin();
+					} else {
+						result.add(0);
+					}
+				} else {
+					// I win
+					if (!drawCanBeRequested) {
+						return ValueVector.createMax();
+					} else {
+						result.add(-1);
+					}
+				}
+			} else {
+				result.add(boardPosition.isDraw() || drawCanBeRequested ? -1 : 0);
+			}
 		}
+
+		result.add(evaluateMaterial(boardPosition));
+		result.add(evaluateThreatsAndProtections(boardPosition));
+		result.add(evaluateOpeningMidgameTacticsAndEndgame(boardPosition));
 		return result;
+	}
+
+	@Override
+	protected Move selectMove(Iterator<GameState> iterator) {
+		return iterator.next().getBoardPosition().getLastMove();
 	}
 
 	@Override
@@ -89,10 +115,6 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			break;
 		}
 		return value;
-	}
-
-	private int evaluateDraw(BoardPosition boardPosition) {
-		return boardPosition.isDraw() ? -3 : (-1 * boardPosition.getRepetitions());
 	}
 
 	private int evaluateMaterial(BoardPosition boardPosition) {
@@ -298,23 +320,23 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			}
 
 			// 5. do not move any piece twice
-			if (boardPosition.getDepth() <= 12) {
-				int repeatedMoves = 0;
-				Set<Piece> movedPieces = new HashSet<>();
-				BoardPosition bp = boardPosition;
-				while (bp != null) {
-					Move lastMove = bp.getLastMove();
-					if (lastMove != null && lastMove.getColour().equals(ownColour) && lastMove.getCastling() == null) {
-						Piece piece = bp.get(lastMove.getTo());
-						if (movedPieces.contains(piece)) {
-							++repeatedMoves;
-						}
-						movedPieces.add(piece);
-					}
-					bp = bp.getPredecessor();
-				}
-				value -= repeatedMoves;
-			}
+			//			if (boardPosition.getDepth() <= 12) {
+			//				int repeatedMoves = 0;
+			//				Set<Piece> movedPieces = new HashSet<>();
+			//				BoardPosition bp = boardPosition;
+			//				while (bp != null) {
+			//					Move lastMove = bp.getLastMove();
+			//					if (lastMove != null && lastMove.getColour().equals(ownColour) && lastMove.getCastling() == null) {
+			//						Piece piece = bp.get(lastMove.getTo());
+			//						if (movedPieces.contains(piece)) {
+			//							++repeatedMoves;
+			//						}
+			//						movedPieces.add(piece);
+			//					}
+			//					bp = bp.getPredecessor();
+			//				}
+			//				value -= repeatedMoves;
+			//			}
 
 			// 6. do not develop the queen too early
 			// implicitly achieved by keeping the castling options and forcing to develop
@@ -334,6 +356,12 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 		}
 	}
 
+	private double distance(Coordinate a, Coordinate b) {
+		double dx = a.getColumn() - b.getColumn();
+		double dy = a.getRow() - b.getRow();
+		return Math.sqrt(dx * dx + dy * dy);
+	}
+
 	private Integer evaluateEndGame(BoardPosition boardPosition) {
 		final Colour opponentsColour = getColour().opposite();
 		PositionedPiece opponentsSingleKing = null;
@@ -350,7 +378,18 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 			}
 		}
 		if (opponentsSingleKing != null) {
-			return -1 * kingsReach(boardPosition, opponentsSingleKing, null);
+			int value = -10 * kingsReach(boardPosition, opponentsSingleKing, null);
+			Iterator<PositionedPiece> positionedPieces2 = boardPosition.getPositionedPieces();
+			while (positionedPieces2.hasNext()) {
+				PositionedPiece positionedPiece = positionedPieces2.next();
+				if (positionedPiece.getPiece().getColour().equals(getColour())
+						&& positionedPiece.getPiece().getFigure() != Figure.Pawn) {
+					// do not linger around in the distance and only threaten king from afar
+					// but zoom in on opponents king with own officers
+					value -= distance(positionedPiece.getCoordinate(), opponentsSingleKing.getCoordinate());
+				}
+			}
+			return value;
 		}
 		return 0;
 	}
@@ -478,17 +517,17 @@ public class ReadyPlayer1 extends MinimaxPlayer {
 
 	@Override
 	protected Value getInvalid() {
-		return ValueVector.INVALID;
+		return ValueVector.createInvalid();
 	}
 
 	@Override
 	protected Value getMin() {
-		return ValueVector.MINIMUM;
+		return ValueVector.createMin();
 	}
 
 	@Override
 	protected Value getMax() {
-		return ValueVector.MAXIMUM;
+		return ValueVector.createMax();
 	}
 
 	private class MoveComparator implements Comparator<Move> {
