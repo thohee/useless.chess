@@ -8,9 +8,6 @@
     * actually visited nodes
     * number of times of alpha/beta pruning
 * iterative deepening
-* use flame graphs for profiling
-* heap analysis, save memory
-* parallelization. With alpha-beta-pruning?
 * uci tournament mode
 * use machine learning to prioritize and select moves
     * train model using publicly available game logs
